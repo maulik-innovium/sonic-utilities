@@ -28,6 +28,7 @@
         "index": "0",
         "lanes": "25,26,27,28",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -38,6 +39,7 @@
         "index": "1",
         "lanes": "29,30,31,32",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -48,6 +50,7 @@
         "index": "2",
         "lanes": "33,34,35,36",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -58,6 +61,7 @@
         "index": "3",
         "lanes": "37,38,39,40",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -68,6 +72,7 @@
         "index": "4",
         "lanes": "45,46,47,48",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -78,6 +83,7 @@
         "index": "5",
         "lanes": "41,42,43,44",
         "mtu": "9100",
+        "tpid": "0x9200",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -88,6 +94,7 @@
         "index": "6",
         "lanes": "1,2,3,4",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -98,6 +105,7 @@
         "index": "7",
         "lanes": "5,6,7,8",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -108,6 +116,7 @@
         "index": "8",
         "lanes": "13,14,15,16",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -118,6 +127,7 @@
         "index": "9",
         "lanes": "9,10,11,12",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -128,6 +138,7 @@
         "index": "10",
         "lanes": "17,18,19,20",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -138,6 +149,7 @@
         "index": "11",
         "lanes": "21,22,23,24",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -148,6 +160,7 @@
         "index": "12",
         "lanes": "53,54,55,56",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -158,6 +171,7 @@
         "index": "13",
         "lanes": "49,50,51,52",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -168,6 +182,7 @@
         "index": "14",
         "lanes": "57,58,59,60",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -178,6 +193,7 @@
         "index": "15",
         "lanes": "61,62,63,64",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -188,6 +204,7 @@
         "index": "16",
         "lanes": "69,70,71,72",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -198,6 +215,7 @@
         "index": "17",
         "lanes": "65,66,67,68",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -208,6 +226,7 @@
         "index": "18",
         "lanes": "73,74,75,76",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -218,6 +237,7 @@
         "index": "19",
         "lanes": "77,78,79,80",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -228,6 +248,7 @@
         "index": "20",
         "lanes": "109,110,111,112",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -238,6 +259,7 @@
         "index": "21",
         "lanes": "105,106,107,108",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -248,6 +270,7 @@
         "index": "22",
         "lanes": "113,114,115,116",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -258,6 +281,7 @@
         "index": "23",
         "lanes": "117,118,119,120",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -268,6 +292,7 @@
         "index": "24",
         "lanes": "125,126,127,128",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -277,6 +302,7 @@
         "index": "25",
         "lanes": "121,122,123,124",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -286,6 +312,7 @@
         "index": "26",
         "lanes": "81,82,83,84",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -295,6 +322,7 @@
         "index": "27",
         "lanes": "85,86,87,88",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -305,6 +333,7 @@
         "index": "28",
         "lanes": "93,94,95,96",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -315,6 +344,7 @@
         "index": "29",
         "lanes": "89,90,91,92",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -325,6 +355,7 @@
         "index": "30",
         "lanes": "101,102,103,104",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -335,6 +366,7 @@
         "index": "31",
         "lanes": "97,98,99,100",
         "mtu": "9100",
+        "tpid": "0x8100",
         "pfc_asym": "off",
         "speed": "40000"
     },
@@ -400,6 +432,23 @@
         "ports@": "PortChannel0002,PortChannel0005,PortChannel0008,PortChannel0011,PortChannel0014,PortChannel0017,PortChannel0020,PortChannel0023,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124",
         "type": "L3"
     },
+    "ACL_TABLE|DATAACL_2": {
+        "policy_desc": "DATAACL_2",
+        "ports@": "PortChannel0002,PortChannel0005,PortChannel0008,PortChannel0011,PortChannel0014,PortChannel0017,PortChannel0020,PortChannel0023,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124",
+        "type": "L3V6"
+    },
+    "ACL_TABLE|DATAACL_3": {
+        "policy_desc": "DATAACL_3",
+        "ports@": "PortChannel0002,PortChannel0005,PortChannel0008,PortChannel0011,PortChannel0014,PortChannel0017,PortChannel0020,PortChannel0023,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124",
+        "type": "L3",
+        "stage": "egress"
+    },
+    "ACL_TABLE|DATAACL_4": {
+        "policy_desc": "DATAACL_4",
+        "ports@": "PortChannel0002,PortChannel0005,PortChannel0008,PortChannel0011,PortChannel0014,PortChannel0017,PortChannel0020,PortChannel0023,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124",
+        "type": "L3V6",
+        "stage": "egress"
+    },
     "ACL_TABLE|EVERFLOW": {
         "policy_desc": "EVERFLOW",
         "ports@": "PortChannel0002,PortChannel0005,PortChannel0008,PortChannel0011,PortChannel0014,PortChannel0017,PortChannel0020,PortChannel0023,Ethernet100,Ethernet104,Ethernet92,Ethernet96,Ethernet84,Ethernet88,Ethernet76,Ethernet80,Ethernet108,Ethernet112,Ethernet64,Ethernet120,Ethernet116,Ethernet124,Ethernet72,Ethernet68",
@@ -428,6 +477,12 @@
     "VLAN|Vlan2000": {
         "dhcp_servers@": "192.0.0.1,192.0.0.2,192.0.0.3,192.0.0.4",
         "vlanid": "2000"
+    },
+    "VLAN|Vlan3000": {
+        "vlanid": "3000"
+    },
+    "VLAN|Vlan4000": {
+        "vlanid": "4000"
     },
     "VLAN_INTERFACE|Vlan1000": {
         "NULL": "NULL"
@@ -465,34 +520,42 @@
     "VLAN_MEMBER|Vlan2000|Ethernet28": {
         "tagging_mode": "untagged"
     },
+    "VLAN_MEMBER|Vlan4000|PortChannel1001": {
+        "tagging_mode": "tagged"
+    },
     "PORTCHANNEL|PortChannel1001": {
         "admin_status": "up",
         "members@": "Ethernet32",
         "min_links": "1",
+        "tpid": "0x8100",
         "mtu": "9100"
     },
     "PORTCHANNEL|PortChannel0001": {
         "admin_status": "up",
         "members@": "Ethernet112",
         "min_links": "1",
+        "tpid": "0x8100",
         "mtu": "9100"
     },
     "PORTCHANNEL|PortChannel0002": {
         "admin_status": "up",
         "members@": "Ethernet116",
         "min_links": "1",
+        "tpid": "0x8100",
         "mtu": "9100"
     },
     "PORTCHANNEL|PortChannel0003": {
         "admin_status": "up",
         "members@": "Ethernet120",
         "min_links": "1",
+        "tpid": "0x8100",
         "mtu": "9100"
     },
     "PORTCHANNEL|PortChannel0004": {
         "admin_status": "up",
         "members@": "Ethernet124",
         "min_links": "1",
+        "tpid": "0x8100",
         "mtu": "9100"
     },
     "PORTCHANNEL_MEMBER|PortChannel1001|Ethernet32": {
@@ -668,6 +731,176 @@
         "platform": "x86_64-mlnx_msn3800-r0",
         "peer_switch": "sonic-switch",
         "type": "ToRRouter"
+    },
+    "SNMP_COMMUNITY|msft": {
+        "TYPE": "RO"
+    },
+    "SNMP_COMMUNITY|Rainer": {
+        "TYPE": "RW"
+    },
+    "SNMP_USER|test_authpriv_RO_2": {
+        "SNMP_USER_TYPE": "AuthNoPriv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "SHA",
+        "SNMP_USER_AUTH_PASSWORD": "test_authpriv_RO_2_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "",
+        "SNMP_USER_ENCRYPTION_PASSWORD": ""
+    },
+    "SNMP_USER|test_authpriv_RO_3": {
+        "SNMP_USER_TYPE": "AuthNoPriv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "HMAC-SHA-2",
+        "SNMP_USER_AUTH_PASSWORD": "test_authpriv_RO_3_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "",
+        "SNMP_USER_ENCRYPTION_PASSWORD": ""
+    },
+    "SNMP_USER|test_priv_RW_4": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "SHA",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RW_4_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "AES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RW_4_encrpytpass"
+    },
+    "SNMP_USER|test_priv_RW_3": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "SHA",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RW_3_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "DES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RW_3_encrpytpass"
+    },
+    "SNMP_USER|test_priv_RO_2": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "MD5",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RO_2_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "AES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RO_2_encrpytpass"
+    },
+    "SNMP_USER|test_nopriv_RO_1": {
+        "SNMP_USER_TYPE": "noAuthNoPriv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "",
+        "SNMP_USER_AUTH_PASSWORD": "",
+        "SNMP_USER_ENCRYPTION_TYPE": "",
+        "SNMP_USER_ENCRYPTION_PASSWORD": ""
+    },
+    "SNMP_USER|test_priv_RW_1": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "MD5",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RO_1_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "DES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RW_1_encrpytpass"
+    },
+    "SNMP_USER|test_authpriv_RW_1": {
+        "SNMP_USER_TYPE": "AuthNoPriv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "MD5",
+        "SNMP_USER_AUTH_PASSWORD": "test_authpriv_RW_1_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "",
+        "SNMP_USER_ENCRYPTION_PASSWORD": ""
+    },
+    "SNMP_USER|test_priv_RO_6": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "HMAC-SHA-2",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RO_6_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "AES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RO_6_encrpytpass"
+    },
+    "SNMP_USER|test_priv_RO_1": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "MD5",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RO_1_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "DES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RO_1_encrpytpass"
+    },
+    "SNMP_USER|test_priv_RO_5": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "HMAC-SHA-2",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RO_5_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "DES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RO_5_encrpytpass"
+    },
+    "SNMP_USER|test_nopriv_RW_1": {
+        "SNMP_USER_TYPE": "noAuthNoPriv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "",
+        "SNMP_USER_AUTH_PASSWORD": "",
+        "SNMP_USER_ENCRYPTION_TYPE": "",
+        "SNMP_USER_ENCRYPTION_PASSWORD": ""
+    },
+    "SNMP_USER|test_priv_RO_3": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "SHA",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RO_3_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "DES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RO_3_encrpytpass"
+    },
+    "SNMP_USER|test_priv_RW_2": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "MD5",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RO_2_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "AES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RW_2_encrpytpass"
+    },
+    "SNMP_USER|test_authpriv_RW_3": {
+        "SNMP_USER_TYPE": "AuthNoPriv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "HMAC-SHA-2",
+        "SNMP_USER_AUTH_PASSWORD": "test_authpriv_RW_3_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "",
+        "SNMP_USER_ENCRYPTION_PASSWORD": ""
+    },
+    "SNMP_USER|test_priv_RW_5": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "HMAC-SHA-2",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RW_5_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "DES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RW_5_encrpytpass"
+    },
+    "SNMP_USER|test_priv_RW_6": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "HMAC-SHA-2",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RW_6_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "AES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RW_6_encrpytpass"
+    },
+    "SNMP_USER|test_authpriv_RW_2": {
+        "SNMP_USER_TYPE": "AuthNoPriv",
+        "SNMP_USER_PERMISSION": "RW",
+        "SNMP_USER_AUTH_TYPE": "SHA",
+        "SNMP_USER_AUTH_PASSWORD": "test_authpriv_RW_2_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "",
+        "SNMP_USER_ENCRYPTION_PASSWORD": ""
+    },
+    "SNMP_USER|test_priv_RO_4": {
+        "SNMP_USER_TYPE": "Priv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "SHA",
+        "SNMP_USER_AUTH_PASSWORD": "test_priv_RO_4_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "AES",
+        "SNMP_USER_ENCRYPTION_PASSWORD": "test_priv_RO_4_encrpytpass"
+    },
+    "SNMP_USER|test_authpriv_RO_1": {
+        "SNMP_USER_TYPE": "AuthNoPriv",
+        "SNMP_USER_PERMISSION": "RO",
+        "SNMP_USER_AUTH_TYPE": "MD5",
+        "SNMP_USER_AUTH_PASSWORD": "test_authpriv_RO_1_authpass",
+        "SNMP_USER_ENCRYPTION_TYPE": "",
+        "SNMP_USER_ENCRYPTION_PASSWORD": ""
+    },
+    "DEVICE_NEIGHBOR|Ethernet0": {
+        "name": "Servers",
+        "port": "eth0"
     },
     "DEVICE_NEIGHBOR|Ethernet4": {
         "name": "Servers0",
@@ -1263,6 +1496,10 @@
         "POLL_INTERVAL": "10000",
         "FLEX_COUNTER_STATUS": "enable"
     },
+    "FLEX_COUNTER_TABLE|PG_DROP": {
+        "POLL_INTERVAL": "10000",
+        "FLEX_COUNTER_STATUS": "enable"
+    },
     "PFC_WD|Ethernet0": {
         "action": "drop",
         "detection_time": "600",
@@ -1330,13 +1567,24 @@
         "dnat_entry_low_threshold": "70",
         "ipmc_entry_threshold_type": "percentage",
         "ipmc_entry_high_threshold": "85",
-        "ipmc_entry_low_threshold": "70"
+        "ipmc_entry_low_threshold": "70",
+        "mpls_inseg_threshold_type": "percentage",
+        "mpls_inseg_high_threshold": "85",
+        "mpls_inseg_low_threshold": "70",
+        "mpls_nexthop_threshold_type": "percentage",
+        "mpls_nexthop_high_threshold": "85",
+        "mpls_nexthop_low_threshold": "70"
     },
     "CHASSIS_MODULE|LINE-CARD1": {
         "admin_status": "down"
     },
     "MUX_CABLE|Ethernet32": {
         "state": "auto",
+	"server_ipv4": "10.1.1.1",
+	"server_ipv6": "fc00::75"
+    },
+    "MUX_CABLE|Ethernet28": {
+        "state": "manual",
 	"server_ipv4": "10.1.1.1",
 	"server_ipv6": "fc00::75"
     },
@@ -1432,8 +1680,14 @@
     "PORT_QOS_MAP|Ethernet0": {
         "pfc_enable": "3,4"
     },
+    "PORT_QOS_MAP|Ethernet4": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet8": {
+    },
     "DEFAULT_LOSSLESS_BUFFER_PARAMETER|AZURE": {
-        "default_dynamic_th": "0"
+        "default_dynamic_th": "0",
+        "over_subscribe_ratio": "2"
     },
     "KUBERNETES_MASTER|SERVER": {
         "ip": "10.3.157.24",
@@ -1455,5 +1709,25 @@
         "wred_red_enable": "true",
         "yellow_drop_probability": "5",
         "red_drop_probability": "5"
+    },
+    "BGP_NEIGHBOR|20.1.1.5": {
+        "rrclient": "0",
+        "name": "T2-Peer",
+        "local_addr": "20.1.1.1",
+        "nhopself": "0",
+        "admin_status": "up",
+        "holdtime": "10",
+        "asn": "65200",
+        "keepalive": "3"
+    },
+    "BGP_NEIGHBOR|30.1.1.5": {
+        "rrclient": "0",
+        "name": "T0-Peer",
+        "local_addr": "30.1.1.1",
+        "nhopself": "0",
+        "admin_status": "up",
+        "holdtime": "10",
+        "asn": "65200",
+        "keepalive": "3"
     }
 }

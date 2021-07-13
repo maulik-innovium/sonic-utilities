@@ -1,4 +1,4 @@
-import imp
+import importlib
 import os
 import shutil
 import sys
@@ -248,3 +248,7 @@ class TestMultiAsicPfcstat(object):
         os.environ["UTILITIES_UNIT_TESTING"] = "0"
         os.environ["UTILITIES_UNIT_TESTING_TOPOLOGY"] = ""
         del_cached_stats()
+        import mock_tables.mock_single_asic
+        importlib.reload(mock_tables.mock_single_asic)
+        import pfcwd.main
+        importlib.reload(pfcwd.main)

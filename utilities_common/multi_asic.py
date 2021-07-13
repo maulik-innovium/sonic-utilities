@@ -2,6 +2,9 @@ import argparse
 import functools
 
 import click
+import netifaces
+import pyroute2
+from natsort import natsorted
 from sonic_py_common import multi_asic
 from utilities_common import constants
 
@@ -27,11 +30,11 @@ class MultiAsic(object):
         For single asic, this function is not applicable
         '''
         if object_type == constants.PORT_OBJ:
-            return multi_asic.is_port_internal(cli_object)
+            return multi_asic.is_port_internal(cli_object, self.current_namespace)
         elif object_type == constants.PORT_CHANNEL_OBJ:
-            return multi_asic.is_port_channel_internal(cli_object)
+            return multi_asic.is_port_channel_internal(cli_object, self.current_namespace)
         elif object_type == constants.BGP_NEIGH_OBJ:
-            return multi_asic.is_bgp_session_internal(cli_object)
+            return multi_asic.is_bgp_session_internal(cli_object, self.current_namespace)
 
     def skip_display(self, object_type, cli_object):
         '''
@@ -102,6 +105,11 @@ _multi_asic_click_options = [
                  help='Namespace name or all'),
 ]
 
+def multi_asic_namespace_validation_callback(ctx, param, value):
+    if not multi_asic.is_multi_asic:
+        click.echo("-n/--namespace is not available for single asic")
+        ctx.abort()
+    return value
 
 def multi_asic_click_options(func):
     for option in reversed(_multi_asic_click_options):
@@ -148,3 +156,24 @@ def multi_asic_args(parser=None):
     parser.add_argument('-n', '--namespace', default=None,
                         help='Display interfaces for specific namespace')
     return parser
+
+def multi_asic_get_ip_intf_from_ns(namespace):
+    if namespace != constants.DEFAULT_NAMESPACE:
+        pyroute2.netns.pushns(namespace)
+    interfaces = natsorted(netifaces.interfaces())
+
+    if namespace != constants.DEFAULT_NAMESPACE:
+        pyroute2.netns.popns()
+
+    return interfaces
+
+
+def multi_asic_get_ip_intf_addr_from_ns(namespace, iface):
+    if namespace != constants.DEFAULT_NAMESPACE:
+        pyroute2.netns.pushns(namespace)
+    ipaddresses = netifaces.ifaddresses(iface)
+
+    if namespace != constants.DEFAULT_NAMESPACE:
+        pyroute2.netns.popns()
+
+    return ipaddresses

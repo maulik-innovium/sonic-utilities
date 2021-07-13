@@ -108,6 +108,27 @@
         "BIG_RED_SWITCH": "enable",
         "POLL_INTERVAL": "199"
     },
+    "PORT_QOS_MAP|Ethernet0": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet4": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet8": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet-BP0": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet-BP4": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet-BP256": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet-BP260": {
+        "pfc_enable": "3,4"
+    },
     "CRM|Config": {
         "acl_table_threshold_type": "percentage",
         "nexthop_group_threshold_type": "percentage",
@@ -157,7 +178,13 @@
         "dnat_entry_low_threshold": "70",
         "ipmc_entry_threshold_type": "percentage",
         "ipmc_entry_high_threshold": "85",
-        "ipmc_entry_low_threshold": "70"
+        "ipmc_entry_low_threshold": "70",
+        "mpls_inseg_threshold_type": "percentage",
+        "mpls_inseg_high_threshold": "85",
+        "mpls_inseg_low_threshold": "70",
+        "mpls_nexthop_threshold_type": "percentage",
+        "mpls_nexthop_high_threshold": "85",
+        "mpls_nexthop_low_threshold": "70"
     },
     "MUX_CABLE|Ethernet32": {
         "state": "auto",
@@ -176,5 +203,31 @@
         "state": "enabled",
         "auto_restart": "enabled",
         "high_mem_alert": "disabled"
+    },
+    "VLAN|Vlan1000": {
+        "vlanid": "1000"
+    },
+    "VLAN_MEMBER|Vlan1000|PortChannel1002": {
+        "tagging_mode": "tagged"
+    },
+    "BGP_NEIGHBOR|10.0.0.1": {
+        "rrclient": "0",
+        "name": "ARISTA01T2",
+        "local_addr": "10.0.0.0",
+        "nhopself": "0",
+        "admin_status": "up",
+        "holdtime": "10",
+        "asn": "65200",
+        "keepalive": "3"
+    },
+    "BGP_NEIGHBOR|fc00::2": {
+        "rrclient": "0",
+        "name": "ARISTA01T2",
+        "local_addr": "fc00::1",
+        "nhopself": "0",
+        "admin_status": "up",
+        "holdtime": "10",
+        "asn": "65200",
+        "keepalive": "3"
     }
 }

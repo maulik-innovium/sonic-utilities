@@ -110,13 +110,18 @@
   * [QoS Show commands](#qos-show-commands)
     * [PFC](#pfc)
     * [Queue And Priority-Group](#queue-and-priority-group)
+    * [Buffer Pool](#buffer-pool)
   * [QoS config commands](#qos-config-commands)
 * [sFlow](#sflow)
   * [sFlow Show commands](#sflow-show-commands)
   * [sFlow Config commands](#sflow-config-commands)
+* [SNMP](#snmp)
+  * [SNMP Show commands](#snmp-show-commands)
+  * [SNMP Config commands](#snmp-config-commands)
 * [Startup & Running Configuration](#startup--running-configuration)
   * [Startup Configuration](#startup-configuration)
   * [Running Configuration](#running-configuration)
+* [Static routing](#static-routing)
 * [Syslog](#syslog)
   * [Syslog config commands](#syslog-config-commands)
 * [System State](#system-state)
@@ -142,6 +147,7 @@
   * [Watermark Show commands](#watermark-show-commands)
   * [Watermark Config commands](#watermark-config-commands)
 * [Software Installation and Management](#software-installation-and-management)
+  * [SONiC Package Manager](#sonic-package-manager)
   * [SONiC Installer](#sonic-installer)
 * [Troubleshooting Commands](#troubleshooting-commands)
 * [Routing Stack](#routing-stack)
@@ -154,6 +160,7 @@
 
 | Version | Modification Date | Details |
 | --- | --- | --- |
+| v6 | May-06-2021 | Add SNMP show and config commands |
 | v5 | Nov-05-2020 | Add document for console commands |
 | v4 | Oct-17-2019 | Unify usage statements and other formatting; Replace tabs with spaces; Modify heading sizes; Fix spelling, grammar and other errors; Fix organization of new commands |
 | v3 | Jun-26-2019 | Update based on 201904 (build#19) release, "config interface" command changes related to interfacename order, FRR/Quagga show command changes, platform specific changes, ACL show changes and few formatting changes |
@@ -340,6 +347,7 @@ This command displays the full list of show commands available in the software; 
     aaa                   Show AAA configuration
     acl                   Show ACL related information
     arp                   Show IP ARP table
+    buffer_pool           Show details of the Buffer-pools
     clock                 Show date and time
     ecn                   Show ECN configuration
     environment           Show environmentals (voltages, fans, temps)
@@ -398,6 +406,7 @@ The same syntax applies to all subgroups of `show` which themselves contain subc
     neighbor     Show neighbor related information
     portchannel  Show PortChannel information
     status       Show Interface status information
+    tpid         Show Interface tpid information
     transceiver  Show SFP Transceiver information
   ```
 
@@ -431,6 +440,15 @@ This command displays relevant information as the SONiC and Linux kernel version
   Build commit: 21ea29a
   Build date: Fri Mar 22 01:55:48 UTC 2019
   Built by: johnar@jenkins-worker-4
+
+  Platform: x86_64-mlnx_msn2700-r0
+  HwSKU: Mellanox-SN2700
+  ASIC: mellanox
+  ASIC Count: 1
+  Serial Number: MT1822K07815
+  Model Number: MSN2700-CS2FO
+  Hardware Rev: A1
+  Uptime: 14:40:15 up 3 min,  1 user,  load average: 1.26, 1.45, 0.66
 
   Docker images:
   REPOSITORY                 TAG                 IMAGE ID            SIZE
@@ -677,9 +695,13 @@ This command displays a summary of the device's hardware platform
 - Example:
   ```
   admin@sonic:~$ show platform summary
-  Platform: x86_64-dell_s6000_s1220-r0
-  HwSKU: Force10-S6000
-  ASIC: broadcom
+  Platform: x86_64-mlnx_msn2700-r0
+  HwSKU: Mellanox-SN2700
+  ASIC: mellanox
+  ASIC Count: 1
+  Serial Number: MT1822K07815
+  Model Number: MSN2700-CS2FO
+  Hardware Rev: A1
   ```
 
 **show platform syseeprom**
@@ -767,10 +789,9 @@ This command displays the status of the device's power supply units
 - Example:
   ```
   admin@sonic:~$ show platform psustatus
-  PSU    Status
-  -----  --------
-  PSU 1  OK
-  PSU 2  OK
+  PSU    Model          Serial        HW Rev      Voltage (V)    Current (A)    Power (W)  Status    LED
+  -----  -------------  ------------  --------  -------------  -------------  -----------  --------  -----
+  PSU 1  MTEF-PSF-AC-A  MT1621X15246  A3                11.97           4.56        54.56  OK        green
   ```
 
 **show platform fan**
@@ -862,7 +883,7 @@ This command displays information for all the interfaces for the transceiver req
 
 - Usage:
   ```
-  show interfaces transceiver (eeprom [-d|--dom] | lpmode | presence) [<interface_name>]
+  show interfaces transceiver (eeprom [-d|--dom] | lpmode | presence | error-status [-hw|--fetch-from-hardware]) [<interface_name>]
   ```
 
 - Example (Decode and display information stored on the EEPROM of SFP transceiver connected to Ethernet0):
@@ -916,6 +937,15 @@ This command displays information for all the interfaces for the transceiver req
   -----------  ----------
   Ethernet100  Present
   ```
+
+- Example (Display error status of SFP transceiver connected to Ethernet100):
+  ```
+  admin@sonic:~$ show interfaces transceiver error-status Ethernet100
+  Port         Error Status
+  -----------  --------------
+  Ethernet100  OK
+  ```
+
 Go Back To [Beginning of the document](#) or [Beginning of this section](#basic-show-commands)
 
 ## AAA & TACACS+
@@ -1366,6 +1396,35 @@ When the optional argument "max_priority"  is specified, each rule’s priority 
   File "acl_full_snmp_1_2_ssh_4.json" has got SNMP Rule1, SNMP Rule2 and SSH Rule4.
   File "acl_incremental_snmp_1_3_ssh_4.json" has got SNMP Rule1, SNMP Rule3 and SSH Rule4.
   This file is created by copying the file "acl_full_snmp_1_2_ssh_4.json" to "acl_incremental_snmp_1_3_ssh_4.json" and then removing SNMP Rule2 and adding SNMP Rule3.
+
+Go Back To [Beginning of the document](#) or [Beginning of this section](#acl)
+
+**config acl add table**
+
+This command is used to create new ACL tables.
+
+- Usage:
+  ```
+  config acl add table [OPTIONS] <table_name> <table_type> [-d <description>] [-p <ports>] [-s (ingress | egress)]
+  ```
+
+- Parameters:
+  - table_name: The name of the ACL table to create.
+  - table_type: The type of ACL table to create (e.g. "L3", "L3V6", "MIRROR")
+  - description: A description of the table for the user. (default is the table_name)
+  - ports: A comma-separated list of ports/interfaces to add to the table. The behavior is as follows:
+    - Physical ports will be bound as physical ports
+    - Portchannels will be bound as portchannels - passing a portchannel member is invalid
+    - VLANs will be expanded into their members (e.g. "Vlan1000" will become "Ethernet0,Ethernet2,Ethernet4...")
+  - stage: The stage this ACL table will be applied to, either ingress or egress. (default is ingress)
+
+- Examples:
+  ```
+  admin@sonic:~$ sudo config acl add table EXAMPLE L3 -p Ethernet0,Ethernet4 -s ingress
+  ```
+  ```
+  admin@sonic:~$ sudo config acl add table EXAMPLE_2 L3V6 -p Vlan1000,PortChannel0001,Ethernet128 -s egress
+  ```
 
 Go Back To [Beginning of the document](#) or [Beginning of this section](#acl)
 
@@ -1962,13 +2021,13 @@ This command displays serial port or a virtual network connection status.
 - Example:
   ```
   admin@sonic:~$ show line
-  Line    Baud    PID    Start Time    Device
-  ------  ------  -----  ------------  --------
-      0       -      -             -
-      1    9600      -             -   switch1
-      2       -      -             -
-      3       -      -             -
-      4       -      -             -
+    Line    Baud    Flow Control    PID    Start Time    Device
+  ------  ------  --------------  -----  ------------  --------
+       1    9600         Enabled      -             -   switch1
+       2       -        Disabled      -             -
+       3       -        Disabled      -             -
+       4       -        Disabled      -             -
+       5       -        Disabled      -             -
   ```
 
 Optionally, you can display configured console ports only by specifying the `-b` or `--breif` flag.
@@ -1976,14 +2035,42 @@ Optionally, you can display configured console ports only by specifying the `-b`
 - Example:
   ```
   admin@sonic:~$ show line -b
-    Line    Baud    PID    Start Time    Device
-  ------  ------  -----  ------------  --------
-       1    9600      -             -   switch1
+    Line    Baud    Flow Control    PID    Start Time    Device
+  ------  ------  --------------  -----  ------------  --------
+       1    9600         Enabled      -             -   switch1
   ```
 
 ## Console config commands
 
 This sub-section explains the list of configuration options available for console management module.
+
+**config console enable**
+
+This command is used to enable SONiC console switch feature.
+
+- Usage:
+  ```
+  config console enable
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config console enable
+  ```
+
+**config console disable**
+
+This command is used to disable SONiC console switch feature.
+
+- Usage:
+  ```
+  config console disable
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config console disable
+  ```
 
 **config console add**
 
@@ -2363,6 +2450,31 @@ Dynamic buffer management is responsible for calculating buffer size according t
 
 ### Configuration commands
 
+**configure shared headroom pool**
+
+This command is used to configure the shared headroom pool. The shared headroom pool can be enabled in the following ways:
+
+- Configure the over subscribe ratio. In this case, the size of shared headroom pool is calculated as the accumulative xoff of all of the lossless PG divided by the over subscribe ratio.
+- Configure the size.
+
+In case both of the above parameters have been configured, the `size` will take effect. To disable shared headroom pool, configure both parameters to zero.
+
+- Usage:
+
+  ```
+  config buffer shared-headroom-pool over-subscribe-ratio <over-subscribe-ratio>
+  config buffer shared-headroom-pool size <size>
+  ```
+
+  The range of over-subscribe-ratio is from 1 to number of ports inclusive.
+
+- Example:
+
+  ```
+  admin@sonic:~$ sudo config shared-headroom-pool over-subscribe-ratio 2
+  admin@sonic:~$ sudo config shared-headroom-pool size 1024000
+  ```
+
 **configure a lossless buffer profile**
 
 This command is used to configure a lossless buffer profile.
@@ -2370,18 +2482,21 @@ This command is used to configure a lossless buffer profile.
 - Usage:
 
   ```
-  config buffer_profile add <profile_name> -xon <xon_threshold> -xoff <xoff_threshold> [-size <size>] [-dynamic_th <dynamic_th_value>] [-pool <ingress_lossless_pool_name>]
-  config buffer_profile set <profile_name> -xon <xon_threshold> -xoff <xoff_threshold> [-size <size>] [-dynamic_th <dynamic_th_value>] [-pool <ingress_lossless_pool_name>]
-  config buffer_profile remove <profile_name>
+  config buffer profile add <profile_name> --xon <xon_threshold> --xoff <xoff_threshold> [-size <size>] [-dynamic_th <dynamic_th_value>] [-pool <ingress_lossless_pool_name>]
+  config buffer profile set <profile_name> --xon <xon_threshold> --xoff <xoff_threshold> [-size <size>] [-dynamic_th <dynamic_th_value>] [-pool <ingress_lossless_pool_name>]
+  config buffer profile remove <profile_name>
   ```
 
   All the parameters are devided to two groups, one for headroom and one for dynamic_th. For any command at lease one group of parameters should be provided.
   For headroom parameters:
 
-  - At lease one of `xoff` and `size` should be provided and the other will be optional and conducted via the formula `xon + xoff = size`.
-  All other parameters are optional.
   - `xon` is madantory.
-  - `xon` + `xoff` <= `size`; For Mellanox platform xon + xoff == size
+  - If shared headroom pool is disabled:
+    - At lease one of `xoff` and `size` should be provided and the other will be optional and conducted via the formula `xon + xoff = size`.
+    - `xon` + `xoff` <= `size`; For Mellanox platform xon + xoff == size
+  - If shared headroom pool is enabled:
+    - `xoff` should be provided.
+    - `size` = `xoff` if it is not provided.
 
   If only headroom parameters are provided, the `dynamic_th` will be taken from `CONFIG_DB.DEFAULT_LOSSLESS_BUFFER_PARAMETER.default_dynamic_th`.
 
@@ -2397,8 +2512,8 @@ This command is used to configure a lossless buffer profile.
 - Example:
 
   ```
-  admin@sonic:~$ sudo config buffer_profile add profile1 -xon 18432 -xoff 18432
-  admin@sonic:~$ sudo config buffer_profile remove profile1
+  admin@sonic:~$ sudo config buffer profile add profile1 --xon 18432 --xoff 18432
+  admin@sonic:~$ sudo config buffer profile remove profile1
   ```
 
 **config interface cable_length**
@@ -2597,6 +2712,12 @@ This command is used to display the status of buffer pools and profiles currentl
 
   ```
   admin@sonic:~$ show buffer configuration
+  Lossless traffic pattern:
+  --------------------  -
+  default_dynamic_th    0
+  over_subscribe_ratio  0
+  --------------------  -
+
   Pool: ingress_lossless_pool
   ----  --------
   type  ingress
@@ -2970,14 +3091,41 @@ Subsequent pages explain each of these commands in detail.
     -?, -h, --help  Show this message and exit.
 
   Commands:
+  autoneg      Show interface autoneg information
   breakout     Show Breakout Mode information by interfaces
   counters     Show interface counters
   description  Show interface status, protocol and...
+  mpls         Show Interface MPLS status
   naming_mode  Show interface naming_mode status
   neighbor     Show neighbor related information
   portchannel  Show PortChannel information
   status       Show Interface status information
+  tpid         Show Interface tpid information
   transceiver  Show SFP Transceiver information
+  ```
+
+**show interfaces autoneg**
+
+This show command displays the port auto negotiation status for all interfaces i.e. interface name, auto negotiation mode, speed, advertised speeds, interface type, advertised interface types, operational status, admin status. For a single interface, provide the interface name with the sub-command.
+
+- Usage:
+  ```
+  show interfaces autoneg status
+  show interfaces autoneg status <interface_name>
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show interfaces autoneg status
+    Interface    Auto-Neg Mode    Speed    Adv Speeds    Type    Adv Types    Oper    Admin
+  -----------  ---------------  -------  ------------  ------  -----------  ------  -------
+    Ethernet0          enabled      25G       10G,25G      CR       CR,CR4      up       up
+    Ethernet4         disabled     100G           all     CR4          all      up       up
+
+  admin@sonic:~$ show interfaces autoneg status Ethernet8
+    Interface    Auto-Neg Mode    Speed    Adv Speeds    Type    Adv Types    Oper    Admin
+  -----------  ---------------  -------  ------------  ------  -----------  ------  -------
+    Ethernet8         disabled     100G           N/A     CR4          N/A      up       up
   ```
 
 **show interfaces breakout**
@@ -3079,7 +3227,7 @@ The "errors" subcommand is used to display the interface errors.
 
 The "rates" subcommand is used to disply only the interface rates. 
 
-- Exmaple: 
+- Example: 
   ```
   admin@str-s6000-acs-11:/usr/bin$ show int counters rates
       IFACE    STATE    RX_OK    RX_BPS    RX_PPS    RX_UTIL    TX_OK    TX_BPS    TX_PPS    TX_UTIL
@@ -3187,6 +3335,78 @@ This command displays the key fields of the interfaces such as Operational Statu
   Ethernet4    down       up  hundredGigE1/2  T0-2:hundredGigE1/30
   ```
 
+**show interfaces mpls**
+
+This command is used to display the configured MPLS state for the list of configured interfaces.
+
+- Usage:
+  ```
+  show interfaces mpls [<interface_name>]
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show interfaces mpls
+  Interface    MPLS State
+  -----------  ------------
+  Ethernet0    disable
+  Ethernet4    enable
+  Ethernet8    enable
+  Ethernet12   disable
+  Ethernet16   disable
+  Ethernet20   disable
+  ```
+
+- Example (to only display the MPLS state for interface Ethernet4):
+  ```
+  admin@sonic:~$ show interfaces mpls Ethernet4
+  Interface    MPLS State
+  -----------  ------------
+  Ethernet4    enable
+  ```
+
+**show interfaces tpid**
+
+This command displays the key fields of the interfaces such as Operational Status, Administrative Status, Alias and TPID.
+
+- Usage:
+  ```
+  show interfaces tpid [<interface_name>]
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show interfaces tpid
+        Interface            Alias    Oper    Admin    TPID
+  ---------------  ---------------  ------  -------  ------
+        Ethernet0   fortyGigE1/1/1      up       up  0x8100
+        Ethernet1   fortyGigE1/1/2      up       up  0x8100
+        Ethernet2   fortyGigE1/1/3    down     down  0x8100
+        Ethernet3   fortyGigE1/1/4    down     down  0x8100
+        Ethernet4   fortyGigE1/1/5      up       up  0x8100
+        Ethernet5   fortyGigE1/1/6      up       up  0x8100
+        Ethernet6   fortyGigE1/1/7      up       up  0x9200
+        Ethernet7   fortyGigE1/1/8      up       up  0x88A8
+        Ethernet8   fortyGigE1/1/9      up       up  0x8100
+        ...
+       Ethernet63  fortyGigE1/4/16    down     down  0x8100
+  PortChannel0001              N/A      up       up  0x8100
+  PortChannel0002              N/A      up       up  0x8100
+  PortChannel0003              N/A      up       up  0x8100
+  PortChannel0004              N/A      up       up  0x8100
+  admin@sonic:~$
+  ```
+
+- Example (to only display the TPID for interface Ethernet6):
+
+  ```
+  admin@sonic:~$ show interfaces tpid Ethernet6
+    Interface           Alias    Oper    Admin    TPID
+  -----------  --------------  ------  -------  ------
+    Ethernet6  fortyGigE1/1/7      up       up  0x9200
+  admin@sonic:~$
+  ```
+
 **show interfaces naming_mode**
 
 Refer sub-section [Interface-Naming-Mode](#Interface-Naming-Mode)
@@ -3286,6 +3506,11 @@ This sub-section explains the following list of configuration on the interfaces.
 4) speed - to set the interface speed
 5) startup - to bring up the administratively shutdown interface
 6) breakout - to set interface breakout mode
+7) autoneg - to set interface auto negotiation mode
+8) advertised-speeds - to set interface advertised speeds
+9) advertised-types - to set interface advertised types
+10) type - to set interface type
+11) mpls - To add or remove MPLS operation for the interface
 
 From 201904 release onwards, the “config interface” command syntax is changed and the format is as follows:
 
@@ -3588,6 +3813,22 @@ This command is used to configure the mtu for the Physical interface. Use the va
   admin@sonic:~$ sudo config interface mtu Ethernet64 1500
   ```
 
+**config interface tpid <interface_name> (Versions >= 202106)**
+
+This command is used to configure the TPID for the Physical/PortChannel interface. default is 0x8100. Other allowed values if supported by HW SKU (0x9100, 0x9200, 0x88A8).
+
+- Usage:
+
+  *Versions >= 202106*
+  ```
+  config interface tpid <interface_name> <tpid_value>
+  ```
+
+- Example (Versions >= 202106):
+  ```
+  admin@sonic:~$ sudo config interface tpid Ethernet64 0x9200
+  ```
+
 **config interface breakout**
 
 This command is used to set breakout mode available for user-specified interface.
@@ -3620,6 +3861,104 @@ kindly use, double tab i.e. <tab><tab> to see the available breakout option cust
 
 Go Back To [Beginning of the document](#) or [Beginning of this section](#interfaces)
 
+**config interface autoneg <interface_name> (Versions >= 202106)**
+
+This command is used to set port auto negotiation mode.
+
+- Usage:
+  ```
+  sudo config interface autoneg --help
+  Usage: config interface autoneg [OPTIONS] <interface_name> <mode>
+
+    Set interface auto negotiation mode
+
+  Options:
+    -v, --verbose   Enable verbose output
+    -h, -?, --help  Show this message and exit.
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config interface autoneg Ethernet0 enabled
+
+  admin@sonic:~$ sudo config interface autoneg Ethernet0 disabled
+  ```
+
+Go Back To [Beginning of the document](#) or [Beginning of this section](#interfaces)
+
+**config interface advertised-speeds <interface_name> (Versions >= 202106)**
+
+This command is used to set port advertised speed.
+
+- Usage:
+  ```
+  sudo config interface advertised-speeds --help
+  Usage: config interface advertised-speeds [OPTIONS] <interface_name> <speed_list>
+
+    Set interface advertised speeds
+
+  Options:
+    -v, --verbose   Enable verbose output
+    -h, -?, --help  Show this message and exit.
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config interface advertised-speeds Ethernet0 all
+
+  admin@sonic:~$ sudo config interface advertised-speeds Ethernet0 50000,100000
+  ```
+
+Go Back To [Beginning of the document](#) or [Beginning of this section](#interfaces)
+
+**config interface advertised-types <interface_name> (Versions >= 202106)**
+
+This command is used to set port advertised interface types.
+
+- Usage:
+  ```
+  sudo config interface advertised-types --help
+  Usage: config interface advertised-types [OPTIONS] <interface_name> <interface_type_list>
+
+    Set interface advertised types
+
+  Options:
+    -v, --verbose   Enable verbose output
+    -h, -?, --help  Show this message and exit.
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config interface advertised-types Ethernet0 all
+
+  admin@sonic:~$ sudo config interface advertised-types Ethernet0 CR,CR4
+  ```
+
+Go Back To [Beginning of the document](#) or [Beginning of this section](#interfaces)
+
+**config interface type <interface_name> (Versions >= 202106)**
+
+This command is used to set port interface type.
+
+- Usage:
+  ```
+  sudo config interface type --help
+  Usage: config interface type [OPTIONS] <interface_name> <interface_type_value>
+
+    Set interface type
+
+  Options:
+    -v, --verbose   Enable verbose output
+    -h, -?, --help  Show this message and exit.
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config interface type Ethernet0 CR4
+  ```
+
+Go Back To [Beginning of the document](#) or [Beginning of this section](#interfaces)
+
 **config interface cable_length (Versions >= 202006)**
 
 This command is used to configure the length of the cable connected to a port. The cable_length is in unit of meters and must be suffixed with "m".
@@ -3641,6 +3980,51 @@ Go Back To [Beginning of the document](#) or [Beginning of this section](#interf
 This command is used to configure a static buffer profile on a port's lossless priorities. There shouldn't be any `lossless_pg` configured on the port when configuring `headroom_override`. The port's headroom won't be updated after `headroom_override` has been configured on the port.
 
 For details please refer [dynamic buffer management](#dynamic-buffer-management)
+
+Go Back To [Beginning of the document](#) or [Beginning of this section](#interfaces)
+
+**config interface mpls add <interface_name> (Versions >= 202106)**
+
+This command is used for adding MPLS operation on the interface.
+MPLS operation for either physical, portchannel, or VLAN interface can be configured using this command.
+
+
+- Usage:
+  ```
+  sudo config interface mpls add --help
+  Usage: config interface mpls add [OPTIONS] <interface_name>
+
+    Add MPLS operation on the interface
+
+  Options:
+    -?, -h, --help  Show this message and exit.
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config interface mpls add Ethernet4
+  ```
+
+**config interface mpls remove <interface_name> (Versions >= 202106)**
+
+This command is used for removing MPLS operation on the interface.
+MPLS operation for either physical, portchannel, or VLAN interface can be configured using this command.
+
+- Usage:
+  ```
+  sudo config interface mpls remove --help
+  Usage: config interface mpls remove [OPTIONS] <interface_name>
+
+    Remove MPLS operation from the interface
+
+  Options:
+    -?, -h, --help  Show this message and exit.
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config interface mpls remove Ethernet4
+  ```
 
 Go Back To [Beginning of the document](#) or [Beginning of this section](#interfaces)
 
@@ -6060,11 +6444,14 @@ This command displays the user watermark for the queues (Egress shared pool occu
 
 **show priority-group**
 
-This command displays the user watermark or persistent-watermark for the Ingress "headroom" or "shared pool occupancy" per priority-group for  all ports
+This command displays:
+1) The user watermark or persistent-watermark for the Ingress "headroom" or "shared pool occupancy" per priority-group for all ports.
+2) Dropped packets per priority-group for all ports
 
 - Usage:
   ```
   show priority-group (watermark | persistent-watermark) (headroom | shared)
+  show priority-group drop counters
   ```
 
 - Example:
@@ -6092,6 +6479,18 @@ This command displays the user watermark or persistent-watermark for the Ingress
 - Example (Ingress headroom per PG):
   ```
   admin@sonic:~$ show priority-group persistent-watermark headroom
+  ```
+
+- Example (Ingress dropped packets per PG):
+  ```
+  admin@sonic:~$ show priority-group drop counters
+  Ingress PG dropped packets:
+        Port    PG0    PG1    PG2    PG3    PG4    PG5    PG6    PG7
+  -----------  -----  -----  -----  -----  -----  -----  -----  -----
+    Ethernet0      0      0      0      0      0      0      0      0
+    Ethernet4      0      0      0      0      0      0      0      0
+    Ethernet8      0      0      0      0      0      0      0      0
+   Ethernet12      0      0      0      0      0      0      0      0
   ```
 
 In addition to user watermark("show queue|priority-group watermark ..."), a persistent watermark is available.
@@ -6123,7 +6522,7 @@ This command displays the user persistet-watermark for the queues (Egress shared
   admin@sonic:~$ show queue persistent-watermark multicast
   ```
 
-- NOTE: Both "user watermark" and "persistent watermark" can be cleared by user:
+- NOTE: "user watermark", "persistent watermark" and "ingress dropped packets" can be cleared by user:
 
   ```
   admin@sonic:~$ sonic-clear queue persistent-watermark unicast
@@ -6133,7 +6532,55 @@ This command displays the user persistet-watermark for the queues (Egress shared
   admin@sonic:~$ sonic-clear priority-group persistent-watermark shared
 
   admin@sonic:~$ sonic-clear priority-group persistent-watermark headroom
+
+  admin@sonic:~$ sonic-clear priority-group drop counters
   ```
+
+#### Buffer Pool
+
+This sub-section explains the following buffer pool parameters that can be displayed using "show buffer_pool" command.
+1) buffer pool watermark
+2) buffer pool persistent-watermark
+
+**show buffer_pool watermark**
+
+This command displays the user watermark for all the buffer pools
+
+- Usage:
+  ```
+  show buffer_pool watermark
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show buffer_pool watermark
+  Shared pool maximum occupancy:
+                   Pool    Bytes
+  ---------------------  -------
+  ingress_lossless_pool        0
+             lossy_pool     2464
+  ```
+
+
+**show buffer_pool persistent-watermark**
+
+This command displays the user persistent-watermark for all the buffer pools
+
+- Usage:
+  ```
+  show buffer_pool persistent-watermark
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show buffer_pool persistent-watermark
+  Shared pool maximum occupancy:
+                   Pool    Bytes
+  ---------------------  -------
+  ingress_lossless_pool        0
+             lossy_pool     2464
+  ```
+
 
 
 ### QoS config commands
@@ -6407,6 +6854,312 @@ This command is used to set the counter polling interval. Default is 20 seconds.
 
 Go Back To [Beginning of the document](#) or [Beginning of this section](#sflow)
 
+## SNMP
+
+### SNMP Show commands
+
+**show runningconfiguration snmp**
+
+This command displays the global SNMP configuration that includes the location, contact, community, and user settings.
+
+- Usage:
+  ```
+  show runningconfiguration snmp
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show runningconfiguration snmp 
+  Location
+  ------------
+  Emerald City
+
+
+  SNMP_CONTACT    SNMP_CONTACT_EMAIL
+  --------------  --------------------
+  joe             joe@contoso.com
+
+
+  Community String    Community Type
+  ------------------  ----------------
+  Jack                RW
+
+
+  User    Permission Type    Type    Auth Type    Auth Password    Encryption Type    Encryption Password
+  ------  -----------------  ------  -----------  ---------------  -----------------  ---------------------
+  Travis  RO                 Priv    SHA          TravisAuthPass   AES                TravisEncryptPass
+  ```
+
+**show runningconfiguration snmp location**
+
+This command displays the SNMP location setting.
+
+- Usage:
+  ```
+  show runningconfiguration snmp location
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show runningconfiguration snmp location
+  Location
+  ------------
+  Emerald City
+  ```
+
+- Usage:
+  ```
+  show runningconfiguration snmp location --json
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show runningconfiguration snmp location --json
+  {'Location': 'Emerald City'}
+  ```
+
+**show runningconfiguration snmp contact**
+
+This command displays the SNMP contact setting.
+
+- Usage:
+  ```
+  show runningconfiguration snmp contact
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show runningconfiguration snmp contact
+  Contact    Contact Email
+  ---------  ---------------
+  joe        joe@contoso.com
+  ```
+
+- Usage:
+  ```
+  show runningconfiguration snmp contact --json
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show runningconfiguration snmp contact --json
+  {'joe': 'joe@contoso.com'}
+  ```
+
+**show runningconfiguration snmp community**
+
+This command display the SNMP community settings.
+
+- Usage:
+  ```
+  show runningconfiguration snmp community
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show runningconfiguration snmp community
+  Community String    Community Type
+  ------------------  ----------------
+  Jack                RW
+  ```
+
+- Usage:
+  ```
+  show runningconfiguration snmp community --json
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show runningconfiguration snmp community --json
+  {'Jack': {'TYPE': 'RW'}}
+  ```
+
+**show runningconfiguration snmp user**
+
+This command display the SNMP user settings.
+
+- Usage:
+  ```
+  show runningconfiguration snmp user
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show runningconfiguration snmp user
+  User    Permission Type    Type    Auth Type    Auth Password    Encryption Type    Encryption Password
+  ------  -----------------  ------  -----------  ---------------  -----------------  ---------------------
+  Travis  RO                 Priv    SHA          TravisAuthPass   AES                TravisEncryptPass
+  ```
+
+- Usage:
+  ```
+  show runningconfiguration snmp user --json
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ show runningconfiguration snmp user --json
+  {'Travis': {'SNMP_USER_TYPE': 'Priv', 'SNMP_USER_PERMISSION': 'RO', 'SNMP_USER_AUTH_TYPE': 'SHA', 'SNMP_USER_AUTH_PASSWORD': 'TravisAuthPass', 'SNMP_USER_ENCRYPTION_TYPE': 'AES', 'SNMP_USER_ENCRYPTION_PASSWORD': 'TravisEncryptPass'}}
+  ```
+
+
+### SNMP Config commands
+
+This sub-section explains how to configure SNMP.
+
+**config snmp location add/del/modify**
+
+This command is used to add, delete, or modify the SNMP location.
+
+- Usage:
+  ```
+  config snmp location (add | del | modify) <location>
+  ```
+
+- Example (Add new SNMP location "Emerald City" if it does not already exist):
+  ```
+  admin@sonic:~$ sudo config snmp location add Emerald City
+  SNMP Location Emerald City has been added to configuration
+  Restarting SNMP service...
+  ```
+
+- Example (Delete SNMP location "Emerald City" if it already exists):
+  ```
+  admin@sonic:~$ sudo config snmp location del Emerald City
+  SNMP Location Emerald City removed from configuration
+  Restarting SNMP service...
+  ```
+
+- Example (Modify SNMP location "Emerald City" to "Redmond"):
+  ```
+  admin@sonic:~$ sudo config snmp location modify Redmond
+  SNMP location Redmond modified in configuration
+  Restarting SNMP service...
+  ```
+
+**config snmp contact add/del/modify**
+
+This command is used to add, delete, or modify the SNMP contact.
+
+- Usage:
+  ```
+  config snmp contact add <contact> <contact_email>
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp contact add joe joe@contoso.com
+  Contact name joe and contact email joe@contoso.com have been added to configuration
+  Restarting SNMP service...
+  ```
+
+- Usage:
+  ```
+  config snmp contact del <contact>
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp contact del joe
+  SNMP contact joe removed from configuration
+  Restarting SNMP service...
+  ```
+
+- Usage:
+  ```
+  config snmp contact modify <contact> <contact_email>
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp contact modify test test@contoso.com
+  SNMP contact test and contact email test@contoso.com updated
+  Restarting SNMP service...
+  ```
+
+**config snmp community add/del/replace**
+
+This command is used to add, delete, or replace the SNMP community.
+
+- Usage:
+  ```
+  config snmp community add <community> (RO | RW)
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp community add testcomm ro
+  SNMP community testcomm added to configuration
+  Restarting SNMP service...
+  ```
+
+- Usage:
+  ```
+  config snmp community del <community>
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp community del testcomm 
+  SNMP community testcomm removed from configuration
+  Restarting SNMP service...
+  ```
+
+- Usage:
+  ```
+  config snmp community replace <community> <new_community>
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp community replace testcomm newtestcomm
+  SNMP community newtestcomm added to configuration
+  SNMP community newtestcomm replace community testcomm
+  Restarting SNMP service...
+  ```
+
+**config snmp user add/del**
+
+This command is used to add or delete the SNMP user for SNMPv3.
+
+- Usage:
+  ```
+  config snmp user add <user> (noAuthNoPriv | AuthNoPriv | Priv) (RO | RW) [[(MD5 | SHA | MMAC-SHA-2) <auth_password>] [(DES |AES) <encrypt_password>]]
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp user add testuser1 noauthnopriv ro
+  SNMP user testuser1 added to configuration
+  Restarting SNMP service...
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp user add testuser2 authnopriv ro sha testuser2_auth_pass
+  SNMP user testuser2 added to configuration
+  Restarting SNMP service...
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp user add testuser3 priv rw md5 testuser3_auth_pass aes testuser3_encrypt_pass
+  SNMP user testuser3 added to configuration
+  Restarting SNMP service...
+  ```
+
+- Usage:
+  ```
+  config snmp user del <user>
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sudo config snmp user del testuser1
+  SNMP user testuser1 removed from configuration
+  Restarting SNMP service...
+  ```
+
 ## Startup & Running Configuration
 
 ### Startup Configuration
@@ -6588,6 +7341,83 @@ This command displays the running configuration of the snmp module.
   ```
 
 Go Back To [Beginning of the document](#) or [Beginning of this section](#Startup--Running-Configuration)
+
+
+## Static routing
+
+### Static routing Config Commands
+
+This sub-section explains of commands is used to add or remove the static route.
+
+**config route add**
+
+This command is used to add a static route. Note that prefix /nexthop vrf`s and interface name are optional. 
+
+- Usage:
+
+  ```
+  config route add prefix [vrf <vrf>] <A.B.C.D/M> nexthop [vrf <vrf>] <A.B.C.D> dev <interface name>
+  ```
+
+- Example:
+
+  ```
+  admin@sonic:~$ config route add prefix 2.2.3.4/32 nexthop 30.0.0.9
+  ```
+
+It also supports ECMP, and adding a new nexthop to the existing prefix will complement it and not overwrite them.
+
+- Example:
+
+  ```
+  admin@sonic:~$ sudo config route add prefix 2.2.3.4/32 nexthop vrf Vrf-RED 30.0.0.9
+  admin@sonic:~$ sudo config route add prefix 2.2.3.4/32 nexthop vrf Vrf-BLUE 30.0.0.10
+  ```
+
+**config route del**
+
+This command is used to remove a static route. Note that prefix /nexthop vrf`s and interface name are optional.
+
+- Usage:
+
+  ```
+  config route del prefix [vrf <vrf>] <A.B.C.D/M> nexthop [vrf <vrf>] <A.B.C.D> dev <interface name>
+  ```
+
+- Example:
+
+  ```
+  admin@sonic:~$ sudo config route del prefix 2.2.3.4/32 nexthop vrf Vrf-RED 30.0.0.9
+  admin@sonic:~$ sudo config route del prefix 2.2.3.4/32 nexthop vrf Vrf-BLUE 30.0.0.10
+  ```
+
+This sub-section explains of command is used to show current routes.
+
+**show ip route**
+
+- Usage:
+
+  ```
+  show ip route
+  ```
+
+- Example:
+
+  ```
+  admin@sonic:~$ show ip route
+  Codes: K - kernel route, C - connected, S - static, R - RIP,
+         O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+         T - Table, v - VNC, V - VNC-Direct, A - Babel, D - SHARP,
+         F - PBR, f - OpenFabric,
+         > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+  
+  S>* 0.0.0.0/0 [200/0] via 192.168.111.3, eth0, weight 1, 3d03h58m
+  S>  1.2.3.4/32 [1/0] via 30.0.0.7, weight 1, 00:00:06
+  C>* 10.0.0.18/31 is directly connected, Ethernet36, 3d03h57m
+  C>* 10.0.0.20/31 is directly connected, Ethernet40, 3d03h57m
+  ```
+
+Go Back To [Beginning of the document](#) or [Beginning of this section](#static-routing)
 
 
 ## Syslog
@@ -7805,8 +8635,316 @@ Go Back To [Beginning of the document](#) or [Beginning of this section](#waterm
 
 ## Software Installation and Management
 
-SONiC software can be installed in two methods, viz, "using sonic-installer tool", "ONIE Installer".
+SONiC images can be installed in one of two methods:
+1. From within a running SONiC image using the `sonic-installer` utility
+2. From the vendor's bootloader (E.g., ONIE,  Aboot, etc.)
 
+SONiC packages are available as prebuilt Docker images and meant to be installed with the *sonic-package-manager* utility.
+
+### SONiC Package Manager
+
+The *sonic-package-manager* is a command line tool to manage (e.g. install, upgrade or uninstall) SONiC Packages.
+
+**sonic-package-manager list**
+
+This command lists all available SONiC packages, their desription, installed version and installation status.
+SONiC package status can be *Installed*, *Not installed* or *Built-In*. "Built-In" status means that a feature is built-in to SONiC image and can't be upgraded or uninstalled.
+
+- Usage:
+  ```
+  sonic-package-manager list
+  ```
+
+- Example:
+  ```
+  admin@sonic:~$ sonic-package-manager list
+  Name            Repository                   Description                   Version    Status
+  --------------  ---------------------------  ----------------------------  ---------  --------------
+  cpu-report      azure/cpu-report             CPU report package            N/A        Not Installed
+  database        docker-database              SONiC database package        1.0.0      Built-In
+  dhcp-relay      azure/docker-dhcp-relay      SONiC dhcp-relay package      1.0.0      Installed
+  fpm-frr         docker-fpm-frr               SONiC fpm-frr package         1.0.0      Built-In
+  lldp            docker-lldp                  SONiC lldp package            1.0.0      Built-In
+  macsec          docker-macsec                SONiC macsec package          1.0.0      Built-In
+  mgmt-framework  docker-sonic-mgmt-framework  SONiC mgmt-framework package  1.0.0      Built-In
+  nat             docker-nat                   SONiC nat package             1.0.0      Built-In
+  pmon            docker-platform-monitor      SONiC pmon package            1.0.0      Built-In
+  radv            docker-router-advertiser     SONiC radv package            1.0.0      Built-In
+  sflow           docker-sflow                 SONiC sflow package           1.0.0      Built-In
+  snmp            docker-snmp                  SONiC snmp package            1.0.0      Built-In
+  swss            docker-orchagent             SONiC swss package            1.0.0      Built-In
+  syncd           docker-syncd-mlnx            SONiC syncd package           1.0.0      Built-In
+  teamd           docker-teamd                 SONiC teamd package           1.0.0      Built-In
+  telemetry       docker-sonic-telemetry       SONiC telemetry package       1.0.0      Built-In
+  ```
+
+**sonic-package-manager repository add**
+
+This command will add a new repository as source for SONiC packages to the database. *NOTE*: requires elevated (root) privileges to run
+
+- Usage:
+  ```
+  Usage: sonic-package-manager repository add [OPTIONS] NAME REPOSITORY
+
+    Add a new repository to database.
+
+    NOTE: This command requires elevated (root) privileges to run.
+
+  Options:
+    --default-reference TEXT  Default installation reference. Can be a tag or
+                              sha256 digest in repository.
+    --description TEXT        Optional package entry description.
+    --help                    Show this message and exit.
+  ```
+- Example:
+  ```
+  admin@sonic:~$ sudo sonic-package-manager repository add \
+    cpu-report azure/sonic-cpu-report --default-reference 1.0.0
+  ```
+
+**sonic-package-manager repository remove**
+
+This command will remove a repository as source for SONiC packages from the database . The package has to be *Not Installed* in order to be removed from package database. *NOTE*: requires elevated (root) privileges to run
+
+- Usage:
+  ```
+  Usage: sonic-package-manager repository remove [OPTIONS] NAME
+
+    Remove repository from database.
+
+    NOTE: This command requires elevated (root) privileges to run.
+
+  Options:
+    --help  Show this message and exit.
+  ```
+- Example:
+  ```
+  admin@sonic:~$ sudo sonic-package-manager repository remove cpu-report
+  ```
+
+**sonic-package-manager install**
+
+This command pulls and installs a package on SONiC host. *NOTE*: this command requires elevated (root) privileges to run
+
+- Usage:
+  ```
+  Usage: sonic-package-manager install [OPTIONS] [PACKAGE_EXPR]
+
+    Install/Upgrade package using [PACKAGE_EXPR] in format
+    "<name>[=<version>|@<reference>]".
+
+      The repository to pull the package from is resolved by lookup in
+      package database,    thus the package has to be added via "sonic-
+      package-manager repository add" command.
+
+      In case when [PACKAGE_EXPR] is a package name "<name>" this command
+      will install or upgrade    to a version referenced by "default-
+      reference" in package database.
+
+    NOTE: This command requires elevated (root) privileges to run.
+
+  Options:
+    --enable                  Set the default state of the feature to enabled
+                              and enable feature right after installation. NOTE:
+                              user needs to execute "config save -y" to make
+                              this setting persistent.
+    --set-owner [local|kube]  Default owner configuration setting for a feature.
+    --from-repository TEXT    Fetch package directly from image registry
+                              repository. NOTE: This argument is mutually
+                              exclusive with arguments: [package_expr,
+                              from_tarball].
+    --from-tarball FILE       Fetch package from saved image tarball. NOTE: This
+                              argument is mutually exclusive with arguments:
+                              [package_expr, from_repository].
+    -f, --force               Force operation by ignoring package dependency
+                              tree and package manifest validation failures.
+    -y, --yes                 Automatically answer yes on prompts.
+    -v, --verbosity LVL       Either CRITICAL, ERROR, WARNING, INFO or DEBUG.
+                              Default is INFO.
+    --skip-host-plugins       Do not install host OS plugins provided by the
+                              package (CLI, etc). NOTE: In case when package
+                              host OS plugins are set as mandatory in package
+                              manifest this option will fail the installation.
+    --allow-downgrade         Allow package downgrade. By default an attempt to
+                              downgrade the package will result in a failure
+                              since downgrade might not be supported by the
+                              package, thus requires explicit request from the
+                              user.
+    --help                    Show this message and exit..
+  ```
+- Example:
+  ```
+  admin@sonic:~$ sudo sonic-package-manager install dhcp-relay=1.0.2
+  ```
+  ```
+  admin@sonic:~$ sudo sonic-package-manager install dhcp-relay@latest
+  ```
+  ```
+  admin@sonic:~$ sudo sonic-package-manager install dhcp-relay@sha256:9780f6d83e45878749497a6297ed9906c19ee0cc48cc88dc63827564bb8768fd
+  ```
+  ```
+  admin@sonic:~$ sudo sonic-package-manager install --from-repository azure/sonic-cpu-report:latest
+  ```
+  ```
+  admin@sonic:~$ sudo sonic-package-manager install --from-tarball sonic-docker-image.gz
+  ```
+
+**sonic-package-manager uninstall**
+
+This command uninstalls package from SONiC host. User needs to stop the feature prior to uninstalling it.
+*NOTE*: this command requires elevated (root) privileges to run.
+
+- Usage:
+  ```
+  Usage: sonic-package-manager uninstall [OPTIONS] NAME
+
+    Uninstall package.
+
+    NOTE: This command requires elevated (root) privileges to run.
+
+  Options:
+    -f, --force          Force operation by ignoring package dependency tree and
+                        package manifest validation failures.
+    -y, --yes            Automatically answer yes on prompts.
+    -v, --verbosity LVL  Either CRITICAL, ERROR, WARNING, INFO or DEBUG. Default
+                        is INFO.
+    --help               Show this message and exit.
+  ```
+- Example:
+  ```
+  admin@sonic:~$ sudo sonic-package-manager uninstall dhcp-relay
+  ```
+
+**sonic-package-manager reset**
+
+This comamnd resets the package by reinstalling it to its default version. *NOTE*: this command requires elevated (root) privileges to run.
+
+- Usage:
+  ```
+  Usage: sonic-package-manager reset [OPTIONS] NAME
+
+    Reset package to the default version.
+
+    NOTE: This command requires elevated (root) privileges to run.
+
+  Options:
+    -f, --force          Force operation by ignoring package dependency tree and
+                        package manifest validation failures.
+    -y, --yes            Automatically answer yes on prompts.
+    -v, --verbosity LVL  Either CRITICAL, ERROR, WARNING, INFO or DEBUG. Default
+                        is INFO.
+    --skip-host-plugins  Do not install host OS plugins provided by the package
+                        (CLI, etc). NOTE: In case when package host OS plugins
+                        are set as mandatory in package manifest this option
+                        will fail the installation.
+    --help               Show this message and exit.
+  ```
+- Example:
+  ```
+  admin@sonic:~$ sudo sonic-package-manager reset dhcp-relay
+  ```
+
+**sonic-package-manager show package versions**
+
+This command will retrieve a list of all available versions for the given package from the configured upstream repository
+
+- Usage:
+  ```
+  Usage: sonic-package-manager show package versions [OPTIONS] NAME
+
+    Show available versions.
+
+  Options:
+    --all    Show all available tags in repository.
+    --plain  Plain output.
+    --help   Show this message and exit.
+  ```
+- Example:
+  ```
+  admin@sonic:~$ sonic-package-manager show package versions dhcp-relay
+  • 1.0.0
+  • 1.0.2
+  • 2.0.0
+  ```
+  ```
+  admin@sonic:~$ sonic-package-manager show package versions dhcp-relay --plain
+  1.0.0
+  1.0.2
+  2.0.0
+  ```
+  ```
+  admin@sonic:~$ sonic-package-manager show package versions dhcp-relay --all
+  • 1.0.0
+  • 1.0.2
+  • 2.0.0
+  • latest
+  ```
+
+**sonic-package-manager show package changelog**
+
+This command fetches the changelog from the package manifest and displays it. *NOTE*: package changelog can be retrieved from registry or read from image tarball without installing it.
+
+- Usage:
+  ```
+  Usage: sonic-package-manager show package changelog [OPTIONS] [PACKAGE_EXPR]
+
+    Show package changelog.
+
+  Options:
+    --from-repository TEXT  Fetch package directly from image registry
+                            repository NOTE: This argument is mutually exclusive
+                            with arguments: [from_tarball, package_expr].
+    --from-tarball FILE     Fetch package from saved image tarball NOTE: This
+                            argument is mutually exclusive with arguments:
+                            [package_expr, from_repository].
+    --help                  Show this message and exit.
+  ```
+- Example:
+  ```
+  admin@sonic:~$ sonic-package-manager show package changelog dhcp-relay
+  1.0.0:
+
+    • Initial release
+
+        Author (author@email.com) Mon, 25 May 2020 12:25:00 +0300
+  ```
+
+**sonic-package-manager show package manifest**
+
+This command fetches the package manifest and displays it. *NOTE*: package manifest can be retrieved from registry or read from image tarball without installing it.
+
+- Usage:
+  ```
+  Usage: sonic-package-manager show package manifest [OPTIONS] [PACKAGE_EXPR]
+
+    Show package manifest.
+
+  Options:
+    --from-repository TEXT  Fetch package directly from image registry
+                            repository NOTE: This argument is mutually exclusive
+                            with arguments: [package_expr, from_tarball].
+    --from-tarball FILE     Fetch package from saved image tarball NOTE: This
+                            argument is mutually exclusive with arguments:
+                            [from_repository, package_expr].
+    -v, --verbosity LVL     Either CRITICAL, ERROR, WARNING, INFO or DEBUG
+    --help                  Show this message and exit.
+  ```
+- Example:
+  ```
+  admin@sonic:~$ sonic-package-manager show package manifest dhcp-relay=2.0.0
+  {
+    "version": "1.0.0",
+    "package": {
+      "version": "2.0.0",
+      "depends": [
+        "database>=1.0.0,<2.0.0"
+      ]
+    },
+    "service": {
+      "name": "dhcp_relay"
+    }
+  }
+  ```
 
 ### SONiC Installer
 This is a command line tool available as part of the SONiC software; If the device is already running the SONiC software, this tool can be used to install an alternate image in the partition.
@@ -7875,6 +9013,13 @@ This command is used to install a new image on the alternate image partition.  T
   Command: grub-set-default --boot-directory=/host 0
 
   Done
+  ```
+
+Installing a new image using the sonic-installer will keep using the packages installed on the currently running SONiC image and automatically migrate those. In order to perform clean SONiC installation use the *--skip-package-migration* option:
+
+- Example:
+  ```
+  admin@sonic:~$ sudo sonic-installer install https://sonic-jenkins.westus.cloudapp.azure.com/job/xxxx/job/buildimage-xxxx-all/xxx/artifact/target/sonic-xxxx.bin --skip-package-migration
   ```
 
 **sonic-installer set_default**

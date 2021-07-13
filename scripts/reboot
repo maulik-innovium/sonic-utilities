@@ -1,14 +1,16 @@
 #!/bin/bash
 DEVPATH="/usr/share/sonic/device"
 PLAT_REBOOT="platform_reboot"
+PLATFORM_UPDATE_REBOOT_CAUSE="platform_update_reboot_cause"
 REBOOT_CAUSE_FILE="/host/reboot-cause/reboot-cause.txt"
+PLATFORM_REBOOT_PRE_CHECK="platform_reboot_pre_check"
 REBOOT_TIME=$(date)
 
 # Reboot immediately if we run the kdump capture kernel
 VMCORE_FILE=/proc/vmcore
 if [ -e $VMCORE_FILE -a -s $VMCORE_FILE ]; then
         echo "We have a /proc/vmcore, then we just kdump'ed"
-        echo "User issued 'kdump' command [User: kdump, Time: ${REBOOT_TIME}]" > ${REBOOT_CAUSE_FILE}
+        echo "Kernel Panic [Time: ${REBOOT_TIME}]" > ${REBOOT_CAUSE_FILE}
         sync
         PLATFORM=$(grep -oP 'sonic_platform=\K\S+' /proc/cmdline)
         if [ ! -z "${PLATFORM}" -a -x ${DEVPATH}/${PLATFORM}/${PLAT_REBOOT} ]; then
@@ -16,13 +18,13 @@ if [ -e $VMCORE_FILE -a -s $VMCORE_FILE ]; then
         fi
         # If no platform-specific reboot tool, just run /sbin/reboot
         /sbin/reboot
-        echo 1 > /proc/sys/kernel/sysrq
         echo b > /proc/sysrq-trigger
 fi
 
 REBOOT_USER=$(logname)
 PLATFORM=$(sonic-cfggen -H -v DEVICE_METADATA.localhost.platform)
 ASIC_TYPE=$(sonic-cfggen -y /etc/sonic/sonic_version.yml -v asic_type)
+SUBTYPE=$(sonic-cfggen -d -v DEVICE_METADATA.localhost.subtype)
 VERBOSE=no
 EXIT_NEXT_IMAGE_NOT_EXISTS=4
 EXIT_SONIC_INSTALLER_VERIFY_REBOOT=21
@@ -49,13 +51,30 @@ function tag_images()
     fi
 }
 
+function stop_pmon_service()
+{
+     CONTAINER_STOP_RC=0
+     debug "Stopping pmon docker"
+     docker kill pmon &> /dev/null || CONTAINER_STOP_RC=$?
+     systemctl stop pmon || debug "Ignore stopping pmon error $?"
+     if [[ CONTAINER_STOP_RC -ne 0 ]]; then
+        debug "Failed killing container pmon RC $CONTAINER_STOP_RC ."
+     fi
+}
+
 function stop_sonic_services()
 {
+    if [[ x"$SUBTYPE" == x"DualToR" ]]; then
+        debug "DualToR detected, stopping mux container before reboot..."
+        systemctl stop mux
+    fi
+
     if [[ x"$ASIC_TYPE" != x"mellanox" ]]; then
         debug "Stopping syncd process..."
         docker exec -i syncd /usr/bin/syncd_request_shutdown --cold > /dev/null
         sleep 3
     fi
+    stop_pmon_service
 }
 
 function clear_warm_boot()
@@ -103,6 +122,11 @@ function reboot_pre_check()
     fi
     rm ${filename}
 
+    if [ -x ${DEVPATH}/${PLATFORM}/${PLATFORM_REBOOT_PRE_CHECK} ]; then
+        ${DEVPATH}/${PLATFORM}/${PLATFORM_REBOOT_PRE_CHECK}
+        [[ $? -ne 0 ]] && exit $?
+    fi
+    
     # Verify the next image by sonic-installer
     local message=$(sonic-installer verify-next-image 2>&1)
     if [ $? -ne 0 ]; then
@@ -165,6 +189,11 @@ fi
 if [ -x ${DEVPATH}/${PLATFORM}/${SSD_FW_UPDATE} ]; then
     debug "updating ssd fw for${REBOOT_TYPE}"
     ${DEVPATH}/${PLATFORM}/${SSD_FW_UPDATE} ${REBOOT_TYPE}
+fi
+
+if [ -x ${DEVPATH}/${PLATFORM}/${PLATFORM_UPDATE_REBOOT_CAUSE} ]; then
+    debug "updating reboot cause for ${PLATFORM}"
+    ${DEVPATH}/${PLATFORM}/${PLATFORM_UPDATE_REBOOT_CAUSE}
 fi
 
 if [ -x ${DEVPATH}/${PLATFORM}/${PLAT_REBOOT} ]; then

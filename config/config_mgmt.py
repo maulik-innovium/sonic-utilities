@@ -2,28 +2,21 @@
 config_mgmt.py provides classes for configuration validation and for Dynamic
 Port Breakout.
 '''
-try:
-    import re
-    import syslog
+import re
+import syslog
+from json import load
+from sys import flags
+from time import sleep as tsleep
 
-    from json import load
-    from time import sleep as tsleep
-    from imp import load_source
-    from jsondiff import diff
-    from sys import flags
+import sonic_yang
+from jsondiff import diff
+from swsssdk import port_util
+from swsscommon.swsscommon import SonicV2Connector, ConfigDBConnector
+from utilities_common.general import load_module_from_source
 
-    # SONiC specific imports
-    import sonic_yang
-    from swsssdk import port_util
-    from swsscommon.swsscommon import SonicV2Connector, ConfigDBConnector
 
-    # Using load_source to 'import /usr/local/bin/sonic-cfggen as sonic_cfggen'
-    # since /usr/local/bin/sonic-cfggen does not have .py extension.
-    load_source('sonic_cfggen', '/usr/local/bin/sonic-cfggen')
-    from sonic_cfggen import deep_update, FormatConverter
-
-except ImportError as e:
-    raise ImportError("%s - required module not found" % str(e))
+# Load sonic-cfggen from source since /usr/local/bin/sonic-cfggen does not have .py extension.
+sonic_cfggen = load_module_from_source('sonic_cfggen', '/usr/local/bin/sonic-cfggen')
 
 # Globals
 YANG_DIR = "/usr/local/yang-models"
@@ -193,8 +186,8 @@ class ConfigMgmt():
         data = dict()
         configdb = ConfigDBConnector()
         configdb.connect()
-        deep_update(data, FormatConverter.db_to_output(configdb.get_config()))
-        self.configdbJsonIn =  FormatConverter.to_serialized(data)
+        sonic_cfggen.deep_update(data, sonic_cfggen.FormatConverter.db_to_output(configdb.get_config()))
+        self.configdbJsonIn = sonic_cfggen.FormatConverter.to_serialized(data)
         self.sysLog(syslog.LOG_DEBUG, 'Reading Input from ConfigDB {}'.\
             format(self.configdbJsonIn))
 
@@ -214,9 +207,9 @@ class ConfigMgmt():
         data = dict()
         configdb = ConfigDBConnector()
         configdb.connect(False)
-        deep_update(data, FormatConverter.to_deserialized(jDiff))
+        sonic_cfggen.deep_update(data, sonic_cfggen.FormatConverter.to_deserialized(jDiff))
         self.sysLog(msg="Write in DB: {}".format(data))
-        configdb.mod_config(FormatConverter.output_to_db(data))
+        configdb.mod_config(sonic_cfggen.FormatConverter.output_to_db(data))
 
         return
 
@@ -376,9 +369,12 @@ class ConfigMgmtDPB(ConfigMgmt):
             if_name_map, if_oid_map = port_util.get_interface_oid_map(dataBase)
             self.sysLog(syslog.LOG_DEBUG, 'if_name_map {}'.format(if_name_map))
 
-            # If we are here, then get ready to update the Config DB, Update
-            # deletion of Config first, then verify in Asic DB for port deletion,
-            # then update addition of ports in config DB.
+            # If we are here, then get ready to update the Config DB as below:
+            # -- shutdown the ports,
+            # -- Update deletion of ports in Config DB,
+            # -- verify Asic DB for port deletion,
+            # -- then update addition of ports in config DB.
+            self._shutdownIntf(delPorts)
             self.writeConfigDB(delConfigToLoad)
             # Verify in Asic DB,
             self._verifyAsicDB(db=dataBase, ports=delPorts, portMap=if_name_map, \
@@ -514,6 +510,27 @@ class ConfigMgmtDPB(ConfigMgmt):
 
         return configToLoad, True
 
+    def _shutdownIntf(self, ports):
+        """
+        Based on the list of Ports, create a dict to shutdown port, update Config DB.
+        Shut down all the interfaces before deletion.
+
+        Parameters:
+            ports(list): list of ports, which are getting deleted due to DPB.
+
+        Returns:
+            void
+        """
+        shutDownConf = dict(); shutDownConf["PORT"] = dict()
+        for intf in ports:
+            shutDownConf["PORT"][intf] = {"admin_status": "down"}
+        self.sysLog(msg='shutdown Interfaces: {}'.format(shutDownConf))
+
+        if len(shutDownConf["PORT"]):
+            self.writeConfigDB(shutDownConf)
+
+        return
+
     def _mergeConfigs(self, D1, D2, uniqueKeys=True):
         '''
         Merge D2 dict in D1 dict, Note both first and second dict will change.
@@ -582,8 +599,7 @@ class ConfigMgmtDPB(ConfigMgmt):
                 for skey in skeys:
                     # pattern is very specific to current primary keys in
                     # config DB, may need to be updated later.
-                    pattern = '^' + skey + '\|' + '|' + skey + '$' + \
-                        '|' + '^' + skey + '$'
+                    pattern = r'^{0}\||{0}$|^{0}$'.format(skey)
                     reg = re.compile(pattern)
                     if reg.search(key):
                         # In primary key, only 1 match can be found, so return

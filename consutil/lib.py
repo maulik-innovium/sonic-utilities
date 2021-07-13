@@ -4,16 +4,14 @@
 # Helper code for CLI for interacting with switches via console device
 #
 
-try:
-    import click
-    import re
-    import subprocess
-    import pexpect
-    import sys
-    import os
-    from sonic_py_common import device_info
-except ImportError as e:
-    raise ImportError("%s - required module not found" % str(e))
+import os
+import pexpect
+import re
+import subprocess
+import sys
+
+import click
+from sonic_py_common import device_info
 
 ERR_DISABLE = 1
 ERR_CMD = 2
@@ -46,7 +44,7 @@ IDLE_FLAG = "idle"
 PICOCOM_READY = "Terminal ready"
 PICOCOM_BUSY = "Resource temporarily unavailable"
 
-FILENAME = "udevprefix.conf"
+UDEV_PREFIX_CONF_FILENAME = "udevprefix.conf"
 
 TIMEOUT_SEC = 0.2
 
@@ -56,16 +54,17 @@ class ConsolePortProvider(object):
     The provider can let user to get console ports information.
     """
 
-    def __init__(self, db, configured_only):
+    def __init__(self, db, configured_only, refresh=False):
         self._db = db
+        self._db_utils = DbUtils(db)
         self._configured_only = configured_only
         self._ports = []
-        self._init_all()
+        self._init_all(refresh)
 
     def get_all(self):
         """Gets all console ports information"""
         for port in self._ports:
-            yield ConsolePortInfo(self._db, port)
+            yield ConsolePortInfo(self._db_utils, port)
 
     def get(self, target, use_device=False):
         """Gets information of a ports, the target is the line number by default"""
@@ -77,21 +76,30 @@ class ConsolePortProvider(object):
         # identify the line number by searching configuration
         for port in self._ports:
             if search_key in port and port[search_key] == target:
-                return ConsolePortInfo(self._db, port)
+                return ConsolePortInfo(self._db_utils, port)
 
         raise LineNotFoundError
 
-    def _init_all(self):
+    def _init_all(self, refresh):
         config_db = self._db.cfgdb
         state_db = self._db.db
 
         # Querying CONFIG_DB to get configured console ports
         keys = config_db.get_keys(CONSOLE_PORT_TABLE)
         ports = []
+        if refresh:
+            busy_lines = SysInfoProvider.list_active_console_processes()
         for k in keys:
             port = config_db.get_entry(CONSOLE_PORT_TABLE, k)
             port[LINE_KEY] = k
-            port[CUR_STATE_KEY] = state_db.get_all(state_db.STATE_DB, "{}|{}".format(CONSOLE_PORT_TABLE, k))
+            if refresh:
+                if k in busy_lines:
+                    pid, date = busy_lines[k]
+                    port[CUR_STATE_KEY] = self._db_utils.update_state(k, BUSY_FLAG, pid, date)
+                else:
+                    port[CUR_STATE_KEY] = self._db_utils.update_state(k, IDLE_FLAG)
+            else:
+                port[CUR_STATE_KEY] = state_db.get_all(state_db.STATE_DB, "{}|{}".format(CONSOLE_PORT_TABLE, k))
             ports.append(port)
 
         # Querying device directory to get all available console ports
@@ -105,8 +113,8 @@ class ConsolePortProvider(object):
         self._ports = ports
 
 class ConsolePortInfo(object):
-    def __init__(self, db, info):
-        self._db = db
+    def __init__(self, db_utils, info):
+        self._db_utils = db_utils
         self._info = info
         self._session = None
     
@@ -226,16 +234,8 @@ class ConsolePortInfo(object):
                 self._update_state(IDLE_FLAG, "", "")
 
     def _update_state(self, state, pid, date, line_num=None):
-        state_db = self._db.db
-        line_key = "{}|{}".format(CONSOLE_PORT_TABLE, self.line_num if line_num is None else line_num)
-        state_db.set(state_db.STATE_DB, line_key, STATE_KEY, state)
-        state_db.set(state_db.STATE_DB, line_key, PID_KEY, pid)
-        state_db.set(state_db.STATE_DB, line_key, START_TIME_KEY, date)
-        self._info[CUR_STATE_KEY] = {
-            STATE_KEY: state,
-            PID_KEY: pid,
-            START_TIME_KEY: date
-        }
+        self._info[CUR_STATE_KEY] = self._db_utils.update_state(
+            self.line_num if line_num is None else line_num, state, pid, date)
 
 class ConsoleSession(object):
     """
@@ -266,10 +266,10 @@ class SysInfoProvider(object):
     @staticmethod
     def init_device_prefix():
         platform_path, _ = device_info.get_paths_to_platform_and_hwsku_dirs()
-        PLUGIN_PATH = "/".join([platform_path, "plugins", FILENAME])
+        UDEV_PREFIX_CONF_FILE_PATH = os.path.join(platform_path, UDEV_PREFIX_CONF_FILENAME)
 
-        if os.path.exists(PLUGIN_PATH):
-            fp = open(PLUGIN_PATH, 'r')
+        if os.path.exists(UDEV_PREFIX_CONF_FILE_PATH):
+            fp = open(UDEV_PREFIX_CONF_FILE_PATH, 'r')
             lines = fp.readlines()
             SysInfoProvider.DEVICE_PREFIX = "/dev/" + lines[0].rstrip()
 
@@ -334,6 +334,23 @@ class SysInfoProvider(object):
             click.echo("Command resulted in error: {}".format(error))
             sys.exit(ERR_CMD)
         return output if abort else (output, error)
+
+class DbUtils(object):
+    def __init__(self, db):
+        self._db = db
+        self._config_db = db.cfgdb
+        self._state_db = db.db
+
+    def update_state(self, line_num, state, pid="", date=""):
+        key = "{}|{}".format(CONSOLE_PORT_TABLE, line_num)
+        self._state_db.set(self._state_db.STATE_DB, key, STATE_KEY, state)
+        self._state_db.set(self._state_db.STATE_DB, key, PID_KEY, pid)
+        self._state_db.set(self._state_db.STATE_DB, key, START_TIME_KEY, date)
+        return {
+            STATE_KEY: state,
+            PID_KEY: pid,
+            START_TIME_KEY: date
+        }
 
 class InvalidConfigurationError(Exception):
     def __init__(self, config_key, message):

@@ -1,16 +1,19 @@
+import importlib
 import os
-import imp
 import sys
 
 import click
-
 import utilities_common.cli as clicommon
-
 from natsort import natsorted
 from sonic_py_common.multi_asic import get_external_ports
 from tabulate import tabulate
 from utilities_common import multi_asic as multi_asic_util
 from utilities_common import constants
+from sonic_py_common import logger
+
+SYSLOG_IDENTIFIER = "config"
+
+log = logger.Logger(SYSLOG_IDENTIFIER)
 
 # mock the redis for unit test purposes #
 try:
@@ -22,7 +25,7 @@ try:
         import mock_tables.dbconnector
     if os.environ["UTILITIES_UNIT_TESTING_TOPOLOGY"] == "multi_asic":
         import mock_tables.mock_multi_asic
-        imp.reload(mock_tables.mock_multi_asic)
+        importlib.reload(mock_tables.mock_multi_asic)
         mock_tables.dbconnector.load_namespace_config()
 
 except KeyError:
@@ -53,7 +56,7 @@ STATS_HEADER = ('QUEUE', 'STATUS',) + list(zip(*STATS_DESCRIPTION))[0]
 CONFIG_HEADER = ('PORT',) + list(zip(*CONFIG_DESCRIPTION))[0]
 
 CONFIG_DB_PFC_WD_TABLE_NAME = 'PFC_WD'
-
+PORT_QOS_MAP =  "PORT_QOS_MAP"
 
 # Main entrypoint
 @click.group()
@@ -239,8 +242,22 @@ class PfcwdCli(object):
             click.echo("Failed to run command, invalid options:")
             for opt in invalid_ports:
                 click.echo(opt)
-            exit()
+            exit(1)
         self.start_cmd(action, restoration_time, ports, detection_time)
+
+
+    def verify_pfc_enable_status_per_port(self, port, pfcwd_info):
+        pfc_status = self.config_db.get_entry(PORT_QOS_MAP, port).get('pfc_enable')
+        if pfc_status is None:
+            log.log_warning("SKIPPED: PFC is not enabled on port: {}".format(port), also_print_to_console=True)
+            return
+
+        self.config_db.mod_entry(
+            CONFIG_DB_PFC_WD_TABLE_NAME, port, None
+        )
+        self.config_db.mod_entry(
+            CONFIG_DB_PFC_WD_TABLE_NAME, port, pfcwd_info
+        )
 
     @multi_asic_util.run_on_multi_asic
     def start_cmd(self, action, restoration_time, ports, detection_time):
@@ -272,21 +289,11 @@ class PfcwdCli(object):
         for port in ports:
             if port == "all":
                 for p in all_ports:
-                    self.config_db.mod_entry(
-                        CONFIG_DB_PFC_WD_TABLE_NAME, p, None
-                    )
-                    self.config_db.mod_entry(
-                        CONFIG_DB_PFC_WD_TABLE_NAME, p, pfcwd_info
-                    )
+                    self.verify_pfc_enable_status_per_port(p, pfcwd_info)
             else:
                 if port not in all_ports:
                     continue
-                self.config_db.mod_entry(
-                    CONFIG_DB_PFC_WD_TABLE_NAME, port, None
-                )
-                self.config_db.mod_entry(
-                    CONFIG_DB_PFC_WD_TABLE_NAME, port, pfcwd_info
-                )
+                self.verify_pfc_enable_status_per_port(port, pfcwd_info)
 
     @multi_asic_util.run_on_multi_asic
     def interval(self, poll_interval):
@@ -375,9 +382,7 @@ class PfcwdCli(object):
         }
 
         for port in active_ports:
-            self.config_db.set_entry(
-                CONFIG_DB_PFC_WD_TABLE_NAME, port, pfcwd_info
-            )
+            self.verify_pfc_enable_status_per_port(port, pfcwd_info)
 
         pfcwd_info = {}
         pfcwd_info['POLL_INTERVAL'] = DEFAULT_POLL_INTERVAL * multiply

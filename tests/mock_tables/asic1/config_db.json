@@ -77,6 +77,26 @@
         "BIG_RED_SWITCH": "enable",
         "POLL_INTERVAL": "199"
     },
+    "PORT_QOS_MAP|Ethernet0": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet4": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet8": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet-BP0": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet-BP4": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet-BP256": {
+        "pfc_enable": "3,4"
+    },
+    "PORT_QOS_MAP|Ethernet-BP260": {
+    },
     "CRM|Config": {
         "acl_table_threshold_type": "percentage",
         "nexthop_group_threshold_type": "percentage",
@@ -126,7 +146,13 @@
         "dnat_entry_low_threshold": "70",
         "ipmc_entry_threshold_type": "percentage",
         "ipmc_entry_high_threshold": "85",
-        "ipmc_entry_low_threshold": "70"
+        "ipmc_entry_low_threshold": "70",
+        "mpls_inseg_threshold_type": "percentage",
+        "mpls_inseg_high_threshold": "85",
+        "mpls_inseg_low_threshold": "70",
+        "mpls_nexthop_threshold_type": "percentage",
+        "mpls_nexthop_high_threshold": "85",
+        "mpls_nexthop_low_threshold": "70"
     },
     "MUX_CABLE|Ethernet32": {
         "state": "auto",
@@ -145,5 +171,25 @@
         "state": "enabled",
         "auto_restart": "enabled",
         "high_mem_alert": "disabled"
+    },
+    "BGP_INTERNAL_NEIGHBOR|10.1.0.1": {
+        "rrclient": "0",
+        "name": "ASIC0",
+        "local_addr": "10.1.0.0",
+        "nhopself": "0",
+        "admin_status": "up",
+        "holdtime": "0",
+        "asn": "65100",
+        "keepalive": "0"
+    },
+    "BGP_INTERNAL_NEIGHBOR|2603:10e2:400:1::2": {
+        "rrclient": "0",
+        "name": "ASIC0",
+        "local_addr": "2603:10e2:400:1::1",
+        "nhopself": "0",
+        "admin_status": "up",
+        "holdtime": "0",
+        "asn": "65100",
+        "keepalive": "0"
     }
 }

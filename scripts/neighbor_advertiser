@@ -169,9 +169,11 @@ def get_loopback_addr(ip_ver):
 def get_vlan_interfaces():
     vlan_info = config_db.get_table('VLAN')
     vlan_interfaces = []
-
+    vlan_intfs = config_db.get_table('VLAN_INTERFACE')
+    # Skip L2 VLANs
     for vlan_name in vlan_info:
-        vlan_interfaces.append(vlan_name)
+        if vlan_name in vlan_intfs:
+            vlan_interfaces.append(vlan_name)
 
     return vlan_interfaces
 
@@ -226,6 +228,23 @@ def get_vlan_addr_prefix(vlan_intf_name, ip_ver):
     return vlan_addr, vlan_prefix
 
 
+def get_link_local_addr(vlan_interface):
+    try:
+        out = subprocess.check_output(['ip', '-6', 'addr', 'show', vlan_interface])
+        out = out.decode('UTF-8')
+        for line in out.splitlines():
+            keys = line.split()
+            if keys[0] == 'inet6':
+                ip = IPNetwork(keys[1])
+                if str(ip.ip).startswith("fe80"):
+                    # Link local ipv6 address
+                    return str(ip.ip)
+    except Exception:
+        log.log_error('failed to get %s addresses from o.s.' % vlan_interface)
+    
+    return None
+
+
 def get_vlan_addresses(vlan_interface):
     vlan_id = get_vlan_interface_vlan_id(vlan_interface)
     vxlan_id = get_vlan_interface_vxlan_id(vlan_interface)
@@ -235,19 +254,10 @@ def get_vlan_addresses(vlan_interface):
     ipv6_addr, ipv6_prefix = get_vlan_addr_prefix(vlan_interface, 6)
 
     if len(ipv6_addr):
-        try:
-            out = subprocess.check_output(['ip', '-6', 'addr', 'show', vlan_interface])
-            out = out.decode('UTF-8')
-            for line in out.splitlines():
-                keys = line.split()
-                if keys[0] == 'inet6':
-                    ip = IPNetwork(keys[1])
-                    if str(ip.ip).startswith("fe80") and str(ip.ip) not in ipv6_addr:
-                        # Link local ipv6 address
-                        ipv6_addr.append(str(ip.ip))
-                        ipv6_prefix.append('128')
-        except Exception:
-            log.log_error('failed to get %s addresses from o.s.' % vlan_interface)
+        link_local_addr = get_link_local_addr(vlan_interface)
+        if link_local_addr and link_local_addr not in ipv6_addr:
+            ipv6_addr.append(link_local_addr)
+            ipv6_prefix.append('128')
 
     metadata = config_db.get_table('DEVICE_METADATA')
     mac_addr = metadata['localhost']['mac']
@@ -494,6 +504,14 @@ def reset_mirror_tunnel():
 # Set vxlan tunnel
 #
 
+def check_existing_tunnel():
+    vxlan_tunnel = config_db.get_table('VXLAN_TUNNEL')
+    if len(vxlan_tunnel):
+        global VXLAN_TUNNEL_NAME
+        VXLAN_TUNNEL_NAME = list(vxlan_tunnel.keys())[0]
+        return True
+    return False
+
 def add_vxlan_tunnel(dst_ipv4_addr):
     vxlan_tunnel_info = {
         'src_ip': get_loopback_addr(4),
@@ -509,12 +527,12 @@ def add_vxlan_tunnel_map():
             'vni': get_vlan_interface_vxlan_id(vlan_intf_name),
             'vlan': vlan_intf_name
         }
-
         config_db.set_entry('VXLAN_TUNNEL_MAP', (VXLAN_TUNNEL_NAME, VXLAN_TUNNEL_MAP_PREFIX + str(index)), vxlan_tunnel_map_info)
 
 
 def set_vxlan_tunnel(ferret_server_ip):
-    add_vxlan_tunnel(ferret_server_ip)
+    if not check_existing_tunnel():
+        add_vxlan_tunnel(ferret_server_ip)
     add_vxlan_tunnel_map()
     log.log_info('Finish setting vxlan tunnel; Ferret: {}'.format(ferret_server_ip))
 
@@ -528,8 +546,12 @@ def remove_vxlan_tunnel():
 
 
 def remove_vxlan_tunnel_map():
+    vxlan_tunnel_name = VXLAN_TUNNEL_NAME
+    vxlan_tunnel = config_db.get_table('VXLAN_TUNNEL')
+    if len(vxlan_tunnel):
+        vxlan_tunnel_name = list(vxlan_tunnel.keys())[0]
     for (index, _) in enumerate(get_vlan_interfaces(), 1):
-        config_db.set_entry('VXLAN_TUNNEL_MAP', (VXLAN_TUNNEL_NAME, VXLAN_TUNNEL_MAP_PREFIX + str(index)), None)
+        config_db.set_entry('VXLAN_TUNNEL_MAP', (vxlan_tunnel_name, VXLAN_TUNNEL_MAP_PREFIX + str(index)), None)
 
 
 def reset_vxlan_tunnel():

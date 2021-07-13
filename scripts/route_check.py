@@ -43,6 +43,8 @@ import re
 import sys
 import syslog
 import time
+import signal
+import traceback
 
 from swsscommon import swsscommon
 
@@ -52,6 +54,9 @@ ASIC_TABLE_NAME = 'ASIC_STATE'
 ASIC_KEY_PREFIX = 'SAI_OBJECT_TYPE_ROUTE_ENTRY:'
 
 SUBSCRIBE_WAIT_SECS = 1
+
+# Max of 2 minutes
+TIMEOUT_SECONDS = 120
 
 UNIT_TESTING = 0
 
@@ -63,6 +68,8 @@ IPV6_SEPARATOR = ':'
 MIN_SCAN_INTERVAL = 10      # Every 10 seconds
 MAX_SCAN_INTERVAL = 3600    # An hour
 
+PRINT_MSG_LEN_MAX = 1000
+
 class Level(Enum):
     ERR = 'ERR'
     INFO = 'INFO'
@@ -72,8 +79,16 @@ class Level(Enum):
         return self.value
 
 
-report_level = syslog.LOG_ERR
+report_level = syslog.LOG_WARNING
 write_to_syslog = False
+
+def handler(signum, frame):
+    print_message(syslog.LOG_ERR,
+            "Aborting routeCheck.py upon timeout signal after {} seconds".
+            format(TIMEOUT_SECONDS))
+    print_message(syslog.LOG_ERR, str(traceback.extract_stack()))
+    raise Exception("timeout occurred")
+
 
 def set_level(lvl, log_to_syslog):
     """
@@ -100,13 +115,19 @@ def print_message(lvl, *args):
     :param args: message as list of strings or convertible to string
     :return None
     """
+    msg = ""
     if (lvl <= report_level):
-        msg = ""
         for arg in args:
-            msg += " " + str(arg)
+            rem_len = PRINT_MSG_LEN_MAX - len(msg)
+            if rem_len <= 0:
+                break
+            msg += str(arg)[0:rem_len]
+
         print(msg)
         if write_to_syslog:
             syslog.syslog(lvl, msg)
+
+    return msg
 
 
 def add_prefix(ip):
@@ -243,6 +264,10 @@ def get_subscribe_updates(selector, subs):
     return (sorted(adds), sorted(deletes))
 
 
+def is_vrf(k):
+    return k.startswith("Vrf")
+
+
 def get_routes():
     """
     helper to read route table from APPL-DB.
@@ -255,7 +280,7 @@ def get_routes():
 
     valid_rt = []
     for k in keys:
-        if not is_local(k):
+        if not is_vrf(k) and not is_local(k):
             valid_rt.append(add_prefix_ifnot(k.lower()))
 
     print_message(syslog.LOG_DEBUG, json.dumps({"ROUTE_TABLE": sorted(valid_rt)}, indent=4))
@@ -320,17 +345,54 @@ def filter_out_local_interfaces(keys):
     :return keys filtered out of local
     """
     rt = []
-    local_if_re = ['eth0', 'lo', 'docker0', 'tun0', 'Loopback\d+']
+    local_if_lst = {'eth0', 'docker0'}
+    local_if_lo = [r'tun0', r'lo', r'Loopback\d+']
 
     db = swsscommon.DBConnector(APPL_DB_NAME, 0)
     tbl = swsscommon.Table(db, 'ROUTE_TABLE')
 
     for k in keys:
         e = dict(tbl.get(k)[1])
+
+        ifname = e.get('ifname', '')
+        if ifname in local_if_lst:
+            continue
+
+        if any([re.match(x, ifname) for x in local_if_lo]):
+            nh = e.get('nexthop')
+            if not nh or ipaddress.ip_address(nh).is_unspecified:
+                continue
+
+        rt.append(k)
+
+    return rt
+
+
+def filter_out_voq_neigh_routes(keys):
+    """
+    helper to filter out voq neigh routes. These are the
+    routes statically added for the voq neighbors. We skip
+    writing route entries in asic db for these. We filter
+    out reporting error on all the host routes written on
+    inband interface prefixed with "Ethernte-IB"
+    :param keys: APPL-DB:ROUTE_TABLE Routes to check.
+    :return keys filtered out for voq neigh routes
+    """
+    rt = []
+    local_if_re = [r'Ethernet-IB\d+']
+
+    db = swsscommon.DBConnector(APPL_DB_NAME, 0)
+    tbl = swsscommon.Table(db, 'ROUTE_TABLE')
+
+    for k in keys:
+        prefix = k.split("/")
+        e = dict(tbl.get(k)[1])
         if not e:
             # Prefix might have been added. So try w/o it.
-            e = dict(tbl.get(k.split("/"))[1])
-        if not e or all([not re.match(x, e['ifname']) for x in local_if_re]):
+            e = dict(tbl.get(prefix[0])[1])
+        if not e or all([not (re.match(x, e['ifname']) and
+            ((prefix[1] == "32" and e['nexthop'] == "0.0.0.0") or
+                (prefix[1] == "128" and e['nexthop'] == "::"))) for x in local_if_re]):
             rt.append(k)
 
     return rt
@@ -372,6 +434,8 @@ def check_routes():
     rt_asic_miss = []
 
     results = {}
+    adds = []
+    deletes = []
 
     selector, subs, rt_asic = get_route_entries()
 
@@ -390,6 +454,9 @@ def check_routes():
 
     if rt_appl_miss:
         rt_appl_miss = filter_out_local_interfaces(rt_appl_miss)
+
+    if rt_appl_miss:
+        rt_appl_miss = filter_out_voq_neigh_routes(rt_appl_miss)
 
     if rt_appl_miss or rt_asic_miss:
         # Look for subscribe updates for a second
@@ -411,10 +478,10 @@ def check_routes():
         results["Unaccounted_ROUTE_ENTRY_TABLE_entries"] = rt_asic_miss
 
     if results:
-        print_message(syslog.LOG_ERR, "Failure results: {",  json.dumps(results, indent=4), "}")
-        print_message(syslog.LOG_ERR, "Failed. Look at reported mismatches above")
-        print_message(syslog.LOG_ERR, "add: {", json.dumps(adds, indent=4), "}")
-        print_message(syslog.LOG_ERR, "del: {", json.dumps(deletes, indent=4), "}")
+        print_message(syslog.LOG_WARNING, "Failure results: {",  json.dumps(results, indent=4), "}")
+        print_message(syslog.LOG_WARNING, "Failed. Look at reported mismatches above")
+        print_message(syslog.LOG_WARNING, "add: ", json.dumps(adds, indent=4))
+        print_message(syslog.LOG_WARNING, "del: ", json.dumps(deletes, indent=4))
         return -1, results
     else:
         print_message(syslog.LOG_INFO, "All good!")
@@ -432,7 +499,7 @@ def main():
     parser=argparse.ArgumentParser(description="Verify routes between APPL-DB & ASIC-DB are in sync")
     parser.add_argument('-m', "--mode", type=Level, choices=list(Level), default='ERR')
     parser.add_argument("-i", "--interval", type=int, default=0, help="Scan interval in seconds")
-    parser.add_argument("-s", "--log_to_syslog", action="store_true", default=False, help="Write message to syslog")
+    parser.add_argument("-s", "--log_to_syslog", action="store_true", default=True, help="Write message to syslog")
     args = parser.parse_args()
 
     set_level(args.mode, args.log_to_syslog)
@@ -447,8 +514,12 @@ def main():
         if UNIT_TESTING:
             interval = 1
 
+    signal.signal(signal.SIGALRM, handler)
+
     while True:
+        signal.alarm(TIMEOUT_SECONDS)
         ret, res= check_routes()
+        signal.alarm(0)
 
         if interval:
             time.sleep(interval)

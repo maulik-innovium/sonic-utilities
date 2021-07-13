@@ -1,8 +1,10 @@
 import os
 import sys
 import textwrap
-import mock
+from unittest import mock
+
 from click.testing import CliRunner
+
 from .mock_tables import dbconnector
 
 test_path = os.path.dirname(os.path.abspath(__file__))
@@ -29,7 +31,7 @@ class TestShowRebootCause(object):
 
     # Test 'show reboot-cause' without previous-reboot-cause.json 
     def test_reboot_cause_no_history_file(self):
-        expected_output = ""
+        expected_output = "Unknown\n"
         runner = CliRunner()
         result = runner.invoke(show.cli.commands["reboot-cause"], [])
         assert result.output == expected_output

@@ -59,6 +59,10 @@ class Bootloader(object):
         image_path = self.get_image_path(image)
         return path.exists(image_path)
 
+    def supports_package_migration(self, image):
+        """tells if the image supports package migration"""
+        return True
+
     @classmethod
     def detect(cls):
         """returns True if the bootloader is in use"""

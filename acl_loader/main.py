@@ -9,7 +9,7 @@ import openconfig_acl
 import tabulate
 import pyangbind.lib.pybindJSON as pybindJSON
 from natsort import natsorted
-from sonic_py_common import device_info
+from sonic_py_common import device_info, multi_asic
 from swsscommon.swsscommon import SonicV2Connector, ConfigDBConnector, SonicDBConfig
 
 
@@ -103,6 +103,7 @@ class AclLoader(object):
         "IP_RSVP": 46,
         "IP_GRE": 47,
         "IP_AUTH": 51,
+        "IP_ICMPV6": 58,
         "IP_L2TP": 115
     }
 
@@ -114,8 +115,13 @@ class AclLoader(object):
         self.tables_db_info = {}
         self.rules_db_info = {}
         self.rules_info = {}
-        # Load global db config. This call is no-op in single npu platforms
-        SonicDBConfig.load_sonic_global_db_config()
+
+        if multi_asic.is_multi_asic():
+            # Load global db config
+            SonicDBConfig.load_sonic_global_db_config()
+        else:
+            SonicDBConfig.initialize()
+
         self.sessions_db_info = {}
         self.configdb = ConfigDBConnector()
         self.configdb.connect()
@@ -126,27 +132,27 @@ class AclLoader(object):
         # Global namespace will be used for Control plane ACL which are via IPTables.
         # Per ASIC namespace will be used for Data and Everflow ACL's.
         # Global Configdb will have all ACL information for both Ctrl and Data/Evereflow ACL's
-        # and will be used as souurce of truth for ACL modification to config DB which will be done to both Global DB and 
+        # and will be used as souurce of truth for ACL modification to config DB which will be done to both Global DB and
         # front asic namespace
-        
+
         self.per_npu_configdb = {}
 
         # State DB are used for to get mirror Session monitor port.
         # For multi-npu platforms each asic namespace can have different monitor port
         # dependinding on which route to session destination ip. So for multi-npu
-        # platforms we get state db for all front asic namespace in addition to 
-        
+        # platforms we get state db for all front asic namespace in addition to
+
         self.per_npu_statedb = {}
 
         # Getting all front asic namespace and correspding config and state DB connector
-        
+
         namespaces = device_info.get_all_namespaces()
         for front_asic_namespaces in namespaces['front_ns']:
             self.per_npu_configdb[front_asic_namespaces] = ConfigDBConnector(use_unix_socket_path=True, namespace=front_asic_namespaces)
             self.per_npu_configdb[front_asic_namespaces].connect()
             self.per_npu_statedb[front_asic_namespaces] = SonicV2Connector(use_unix_socket_path=True, namespace=front_asic_namespaces)
             self.per_npu_statedb[front_asic_namespaces].connect(self.per_npu_statedb[front_asic_namespaces].STATE_DB)
-        
+
         self.read_tables_info()
         self.read_rules_info()
         self.read_sessions_info()
@@ -177,8 +183,8 @@ class AclLoader(object):
         Read POLICER table from configuration database
         :return:
         """
-        
-        # For multi-npu platforms we will read from any one of front asic namespace 
+
+        # For multi-npu platforms we will read from any one of front asic namespace
         # config db as the information should be same across all config db
         if self.per_npu_configdb:
             namespace_configdb = list(self.per_npu_configdb.values())[0]
@@ -195,7 +201,7 @@ class AclLoader(object):
         :return:
         """
 
-        # For multi-npu platforms we will read from any one of front asic namespace 
+        # For multi-npu platforms we will read from any one of front asic namespace
         # config db as the information should be same across all config db
         if self.per_npu_configdb:
             namespace_configdb = list(self.per_npu_configdb.values())[0]
@@ -204,8 +210,8 @@ class AclLoader(object):
             self.sessions_db_info = self.configdb.get_table(self.CFG_MIRROR_SESSION_TABLE)
         for key in self.sessions_db_info:
             if self.per_npu_statedb:
-                # For multi-npu platforms we will read from all front asic name space 
-                # statedb as the monitor port will be differnt for each asic 
+                # For multi-npu platforms we will read from all front asic name space
+                # statedb as the monitor port will be differnt for each asic
                 # and it's status also might be different (ideally should not happen)
                 # We will store them as dict of 'asic' : value
                 self.sessions_db_info[key]["status"] = {}
@@ -277,6 +283,14 @@ class AclLoader(object):
     def is_table_valid(self, tname):
         return self.tables_db_info.get(tname)
 
+    def is_table_egress(self, tname):
+        """
+        Check if ACL table stage is egress
+        :param tname: ACL table name
+        :return: True if table type is Egress
+        """
+        return self.tables_db_info[tname].get("stage", Stage.INGRESS).upper() == Stage.EGRESS
+
     def is_table_mirror(self, tname):
         """
         Check if ACL table type is ACL_TABLE_TYPE_MIRROR or ACL_TABLE_TYPE_MIRRORV6
@@ -284,6 +298,30 @@ class AclLoader(object):
         :return: True if table type is MIRROR or MIRRORV6 else False
         """
         return self.tables_db_info[tname]['type'].upper().startswith(self.ACL_TABLE_TYPE_MIRROR)
+
+    def is_table_l3v6(self, tname):
+        """
+        Check if ACL table type is L3V6
+        :param tname: ACL table name
+        :return: True if table type is L3V6 else False
+        """
+        return self.tables_db_info[tname]["type"].upper() == "L3V6"
+
+    def is_table_l3(self, tname):
+        """
+        Check if ACL table type is L3
+        :param tname: ACL table name
+        :return: True if table type is L3 else False
+        """
+        return self.tables_db_info[tname]["type"].upper() == "L3"
+
+    def is_table_ipv6(self, tname):
+        """
+        Check if ACL table type is IPv6 (L3V6 or MIRRORV6)
+        :param tname: ACL table name
+        :return: True if table type is IPv6 else False
+        """
+        return self.tables_db_info[tname]["type"].upper() in ("L3V6", "MIRRORV6")
 
     def is_table_control_plane(self, tname):
         """
@@ -363,12 +401,12 @@ class AclLoader(object):
         # check if per npu state db is there then read using first state db
         # else read from global statedb
         if self.per_npu_statedb:
-            # For multi-npu we will read using anyone statedb connector for front asic namespace. 
-            # Same information should be there in all state DB's 
+            # For multi-npu we will read using anyone statedb connector for front asic namespace.
+            # Same information should be there in all state DB's
             # as it is static information about switch capability
             namespace_statedb = list(self.per_npu_statedb.values())[0]
             capability = namespace_statedb.get_all(self.statedb.STATE_DB, "{}|switch".format(self.SWITCH_CAPABILITY_TABLE))
-        else: 
+        else:
             capability = self.statedb.get_all(self.statedb.STATE_DB, "{}|switch".format(self.SWITCH_CAPABILITY_TABLE))
         for action_key in dict(action_props):
             key = "{}|{}".format(self.ACL_ACTIONS_CAPABILITY_FIELD, stage.upper())
@@ -404,9 +442,18 @@ class AclLoader(object):
             else:
                 try:
                     rule_props["ETHER_TYPE"] = int(rule.l2.config.ethertype)
-                except:
-                    raise AclLoaderException("Failed to convert ethertype %s table %s rule %s" % (
-                        rule.l2.config.ethertype, table_name, rule_idx))
+                except Exception as e:
+                    raise AclLoaderException(
+                        "Failed to convert ethertype %s; table %s rule %s; exception=%s" %
+                        (rule.l2.config.ethertype, table_name, rule_idx, str(e)))
+
+        if rule.l2.config.vlan_id != "" and rule.l2.config.vlan_id != "null":
+            vlan_id = rule.l2.config.vlan_id
+
+            if vlan_id <= 0 or vlan_id >= 4096:
+                raise AclLoaderException("VLAN ID %d is out of bounds (0, 4096)" % (vlan_id))
+
+            rule_props["VLAN_ID"] = vlan_id
 
         return rule_props
 
@@ -417,7 +464,12 @@ class AclLoader(object):
         # so there isn't currently a good way to check if the user defined proto=0 or not.
         if rule.ip.config.protocol:
             if rule.ip.config.protocol in self.ip_protocol_map:
-                rule_props["IP_PROTOCOL"] = self.ip_protocol_map[rule.ip.config.protocol]
+                # Special case: ICMP has different protocol numbers for IPv4 and IPv6, so if we receive
+                # "IP_ICMP" we need to pick the correct protocol number for the IP version
+                if rule.ip.config.protocol == "IP_ICMP" and self.is_table_ipv6(table_name):
+                    rule_props["IP_PROTOCOL"] = self.ip_protocol_map["IP_ICMPV6"]
+                else:
+                    rule_props["IP_PROTOCOL"] = self.ip_protocol_map[rule.ip.config.protocol]
             else:
                 try:
                     int(rule.ip.config.protocol)
@@ -445,6 +497,31 @@ class AclLoader(object):
         if self.is_table_mirror(table_name):
             if rule.ip.config.dscp:
                 rule_props["DSCP"] = rule.ip.config.dscp
+
+        return rule_props
+
+    def convert_icmp(self, table_name, rule_idx, rule):
+        rule_props = {}
+
+        is_table_v6 = self.is_table_ipv6(table_name)
+        type_key = "ICMPV6_TYPE" if is_table_v6 else "ICMP_TYPE"
+        code_key = "ICMPV6_CODE" if is_table_v6 else "ICMP_CODE"
+
+        if rule.icmp.config.type != "" and rule.icmp.config.type != "null":
+            icmp_type = rule.icmp.config.type
+
+            if icmp_type < 0 or icmp_type > 255:
+                raise AclLoaderException("ICMP type %d is out of bounds [0, 255]" % (icmp_type))
+
+            rule_props[type_key] = icmp_type
+
+        if rule.icmp.config.code != "" and rule.icmp.config.code != "null":
+            icmp_code = rule.icmp.config.code
+
+            if icmp_code < 0 or icmp_code > 255:
+                raise AclLoaderException("ICMP code %d is out of bounds [0, 255]" % (icmp_code))
+
+            rule_props[code_key] = icmp_code
 
         return rule_props
 
@@ -506,6 +583,19 @@ class AclLoader(object):
 
         return rule_props
 
+    def validate_rule_fields(self, rule_props):
+        protocol = rule_props.get("IP_PROTOCOL")
+
+        if protocol:
+            if "TCP_FLAGS" in rule_props and protocol != 6:
+                raise AclLoaderException("IP_PROTOCOL={} is not TCP, but TCP flags were provided".format(protocol))
+
+            if ("ICMP_TYPE" in rule_props or "ICMP_CODE" in rule_props) and protocol != 1:
+                raise AclLoaderException("IP_PROTOCOL={} is not ICMP, but ICMP fields were provided".format(protocol))
+
+            if ("ICMPV6_TYPE" in rule_props or "ICMPV6_CODE" in rule_props) and protocol != 58:
+                raise AclLoaderException("IP_PROTOCOL={} is not ICMPV6, but ICMPV6 fields were provided".format(protocol))
+
     def convert_rule_to_db_schema(self, table_name, rule):
         """
         Convert rules format from openconfig ACL to Config DB schema
@@ -519,11 +609,20 @@ class AclLoader(object):
 
         rule_props["PRIORITY"] = str(self.max_priority - rule_idx)
 
+        # setup default ip type match to dataplane acl (could be overriden by rule later)
+        if self.is_table_l3v6(table_name):
+            rule_props["IP_TYPE"] = "IPV6ANY"  # ETHERTYPE is not supported for DATAACLV6
+        elif self.is_table_l3(table_name):
+            rule_props["ETHER_TYPE"] = str(self.ethertype_map["ETHERTYPE_IPV4"])
+
         deep_update(rule_props, self.convert_action(table_name, rule_idx, rule))
         deep_update(rule_props, self.convert_l2(table_name, rule_idx, rule))
         deep_update(rule_props, self.convert_ip(table_name, rule_idx, rule))
+        deep_update(rule_props, self.convert_icmp(table_name, rule_idx, rule))
         deep_update(rule_props, self.convert_transport(table_name, rule_idx, rule))
         deep_update(rule_props, self.convert_input_interface(table_name, rule_idx, rule))
+
+        self.validate_rule_fields(rule_props)
 
         return rule_data
 
@@ -537,7 +636,7 @@ class AclLoader(object):
         rule_data = {(table_name, "DEFAULT_RULE"): rule_props}
         rule_props["PRIORITY"] = str(self.min_priority)
         rule_props["PACKET_ACTION"] = "DROP"
-        if 'v6' in table_name.lower():
+        if self.is_table_ipv6(table_name):
             rule_props["IP_TYPE"] = "IPV6ANY"  # ETHERTYPE is not supported for DATAACLV6
         else:
             rule_props["ETHER_TYPE"] = str(self.ethertype_map["ETHERTYPE_IPV4"])
@@ -567,7 +666,7 @@ class AclLoader(object):
                 except AclLoaderException as ex:
                     error("Error processing rule %s: %s. Skipped." % (acl_entry_name, ex))
 
-            if not self.is_table_mirror(table_name):
+            if not self.is_table_mirror(table_name) and not self.is_table_egress(table_name):
                 deep_update(self.rules_info, self.deny_rule(table_name))
 
     def full_update(self):
@@ -636,7 +735,7 @@ class AclLoader(object):
         # Add all new dataplane rules
         for key in new_dataplane_rules:
             self.configdb.mod_entry(self.ACL_RULE, key, self.rules_info[key])
-            # Program for per-asic namespace corresponding to front asic also if present. 
+            # Program for per-asic namespace corresponding to front asic also if present.
             for namespace_configdb in self.per_npu_configdb.values():
                 namespace_configdb.mod_entry(self.ACL_RULE, key, self.rules_info[key])
 
@@ -646,14 +745,14 @@ class AclLoader(object):
 
         for key in added_controlplane_rules:
             self.configdb.mod_entry(self.ACL_RULE, key, self.rules_info[key])
-            # Program for per-asic namespace corresponding to front asic also if present. 
+            # Program for per-asic namespace corresponding to front asic also if present.
             # For control plane ACL it's not needed but to keep all db in sync program everywhere
             for namespace_configdb in self.per_npu_configdb.values():
                 namespace_configdb.mod_entry(self.ACL_RULE, key, self.rules_info[key])
 
         for key in removed_controlplane_rules:
             self.configdb.mod_entry(self.ACL_RULE, key, None)
-            # Program for per-asic namespace corresponding to front asic also if present. 
+            # Program for per-asic namespace corresponding to front asic also if present.
             # For control plane ACL it's not needed but to keep all db in sync program everywhere
             for namespace_configdb in self.per_npu_configdb.values():
                 namespace_configdb.mod_entry(self.ACL_RULE, key, None)
@@ -661,7 +760,7 @@ class AclLoader(object):
         for key in existing_controlplane_rules:
             if cmp(self.rules_info[key], self.rules_db_info[key]) != 0:
                 self.configdb.set_entry(self.ACL_RULE, key, self.rules_info[key])
-                # Program for per-asic namespace corresponding to front asic also if present. 
+                # Program for per-asic namespace corresponding to front asic also if present.
                 # For control plane ACL it's not needed but to keep all db in sync program everywhere
                 for namespace_configdb in self.per_npu_configdb.values():
                     namespace_configdb.set_entry(self.ACL_RULE, key, self.rules_info[key])
@@ -676,10 +775,10 @@ class AclLoader(object):
             if not table or table == key[0]:
                 if not rule or rule == key[1]:
                     self.configdb.set_entry(self.ACL_RULE, key, None)
-                    # Program for per-asic namespace corresponding to front asic also if present. 
+                    # Program for per-asic namespace corresponding to front asic also if present.
                     for namespace_configdb in self.per_npu_configdb.values():
                         namespace_configdb.set_entry(self.ACL_RULE, key, None)
-    
+
     def show_table(self, table_name):
         """
         Show ACL table configuration.

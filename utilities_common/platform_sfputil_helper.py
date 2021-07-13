@@ -1,9 +1,12 @@
 import sys
 
 import click
+
+from . import cli as clicommon
 from sonic_py_common import multi_asic, device_info
 
 platform_sfputil = None
+
 
 def load_platform_sfputil():
 
@@ -37,3 +40,43 @@ def platform_sfputil_read_porttab_mappings():
         sys.exit(1)
 
     return 0
+
+
+def logical_port_name_to_physical_port_list(port_name):
+    if port_name.startswith("Ethernet"):
+        if platform_sfputil.is_logical_port(port_name):
+            return platform_sfputil.get_logical_to_physical(port_name)
+        else:
+            click.echo("Invalid port '{}'".format(port_name))
+            return None
+    else:
+        return [int(port_name)]
+
+
+def get_logical_list():
+
+    return platform_sfputil.logical
+
+
+def get_asic_id_for_logical_port(port):
+
+    return platform_sfputil.get_asic_id_for_logical_port(port)
+
+
+def get_physical_to_logical():
+
+    return platform_sfputil.physical_to_logical
+
+
+def get_interface_alias(port, db):
+
+    if port is not "all" and port is not None:
+        alias = port
+        iface_alias_converter = clicommon.InterfaceAliasConverter(db)
+        port = iface_alias_converter.alias_to_name(alias)
+        if port is None:
+            click.echo("cannot find port name for alias {}".format(alias))
+            sys.exit(1)
+
+    return port
+

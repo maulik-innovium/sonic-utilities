@@ -17,6 +17,24 @@
         "nominal_bit_rate": "255",
         "application_advertisement": "N/A"
     },
+    "TRANSCEIVER_INFO|Ethernet12": {
+        "type": "QSFP28 or later",
+        "hardware_rev": "AC",
+        "serial": "MT1706FT02064",
+        "manufacturer": "Credo",
+        "model": "CACL1X321P2PA1MS",
+        "vendor_oui": "00-02-c9",
+        "vendor_date": "2017-01-13 ",
+        "connector": "No separable connector",
+        "encoding": "64B66B",
+        "ext_identifier": "Power Class 3(2.5W max), CDR present in Rx Tx",
+        "ext_rateselect_compliance": "QSFP+ Rate Select Version 1",
+        "cable_type": "Length Cable Assembly(m)",
+        "cable_length": "3",
+        "specification_compliance": "{'10/40G Ethernet Compliance Code': '40G Active Cable (XLPPI)'}",
+        "nominal_bit_rate": "255",
+        "application_advertisement": "N/A"
+    },
     "TRANSCEIVER_DOM_SENSOR|Ethernet0": {
         "temperature": "30.9258",
         "voltage": "3.2824",
@@ -115,23 +133,159 @@
         "txpowerlowalarm": "-10.5012",
         "txpowerlowwarning": "-7.5007"
     },
+    "TRANSCEIVER_STATUS|Ethernet0": {
+        "status": "67",
+        "error": "Blocking Error|High temperature"
+    },
+    "TRANSCEIVER_STATUS|Ethernet4": {
+        "status": "1",
+        "error": "N/A"
+    },
+    "TRANSCEIVER_STATUS|Ethernet8": {
+        "status": "0",
+        "error": "N/A"
+    },
+    "TRANSCEIVER_STATUS|Ethernet12": {
+        "status": "255",
+        "error": "N/A"
+    },
     "CHASSIS_INFO|chassis 1": {
         "psu_num": "2"
     },
     "PSU_INFO|PSU 1": {
         "presence": "true",
         "status": "true",
+        "model": "0J6J4K",
+        "serial": "CN-0J6J4K-17972-5AF-0086-A00",
+        "revision": "1",
+        "temp": "None",
+        "temp_threshold": "None",
+        "voltage": "12.19",
+        "voltage_min_threshold": "None",
+        "voltage_max_threshold": "None",
+        "current": "8.37",
+        "power": "102.7",
+        "is_replaceable": "False",
         "led_status": "green"
     },
     "PSU_INFO|PSU 2": {
         "presence": "true",
         "status": "true",
+        "model": "0J6J4K",
+        "serial": "CN-0J6J4K-17972-5AF-008M-A00",
+	"revision": "A",
+        "temp": "None",
+        "temp_threshold": "None",
+        "voltage": "12.18",
+        "voltage_min_threshold": "None",
+        "voltage_max_threshold": "None",
+        "current": "10.07",
+        "power": "122.0",
+        "is_replaceable": "False",
         "led_status": "green"
     },
-    
+    "EEPROM_INFO|TlvHeader": {
+        "Id String": "TlvInfo",
+        "Version": "1",
+        "Total Length": "170"
+    },
+    "EEPROM_INFO|State": {
+        "Initialized": "1"
+    },
+    "EEPROM_INFO|Checksum": {
+        "Valid": "1"
+    },
+    "EEPROM_INFO|0x21": {
+        "Len": "8",
+        "Name": "Product Name",
+        "Value": "S6100-ON"
+    },
+    "EEPROM_INFO|0x22": {
+        "Len": "6",
+        "Name": "Part Number",
+        "Value": "0F6N2R"
+    },
+    "EEPROM_INFO|0x23": {
+        "Len": "20",
+        "Name": "Serial Number",
+        "Value": "TH0F6N2RCET0007600NG"
+    },
+    "EEPROM_INFO|0x24": {
+        "Len": "6",
+        "Name": "Base MAC Address",
+        "Value": "0C:29:EF:CF:AC:A0"
+    },
+    "EEPROM_INFO|0x25": {
+        "Len": "19",
+        "Name": "Manufacture Date",
+        "Value": "07/07/2020 15:05:34"
+    },
+    "EEPROM_INFO|0x26": {
+        "Len": "1",
+        "Name": "Device Version",
+        "Value": "1"
+    },
+    "EEPROM_INFO|0x27": {
+        "Len": "3",
+        "Name": "Label Revision",
+        "Value": "A08"
+    },
+    "EEPROM_INFO|0x28": {
+        "Len": "26",
+        "Name": "Platform Name",
+        "Value": "x86_64-dell_s6100_c2538-r0"
+    },
+    "EEPROM_INFO|0x29": {
+        "Len": "8",
+        "Name": "ONIE Version",
+        "Value": "3.15.1.0"
+    },
+    "EEPROM_INFO|0x2a": {
+        "Len": "2",
+        "Name": "MAC Addresses",
+        "Value": "384"
+    },
+    "EEPROM_INFO|0x2b": {
+        "Len": "5",
+        "Name": "Manufacturer",
+        "Value": "CET00"
+    },
+    "EEPROM_INFO|0x2c": {
+        "Len": "2",
+        "Name": "Manufacture Country",
+        "Value": "TH"
+    },
+    "EEPROM_INFO|0x2d": {
+        "Len": "4",
+        "Name": "Vendor Name",
+        "Value": "DELL"
+    },
+    "EEPROM_INFO|0x2e": {
+        "Len": "8",
+        "Name": "Diag Version",
+        "Value": "3.25.4.1"
+    },
+    "EEPROM_INFO|0x2f": {
+        "Len": "7",
+        "Name": "Service Tag",
+        "Value": "F3CD9Z2"
+    },
+    "EEPROM_INFO|0xfd": {
+        "Len_0": "7",
+        "Name_0": "Vendor Extension",
+        "Value_0": "",
+        "Num_vendor_ext": "1"
+    },
+    "EEPROM_INFO|0xfe": {
+        "Len": "4",
+        "Name": "CRC-32",
+        "Value": "0xAC518FB3"
+    },
     "SWITCH_CAPABILITY|switch": {
         "MIRROR": "true",
         "MIRRORV6": "true",
+        "PORT_TPID_CAPABLE": "true",
+        "LAG_TPID_CAPABLE": "true",
         "ACL_ACTIONS|INGRESS": "PACKET_ACTION,REDIRECT_ACTION,MIRROR_INGRESS_ACTION",
         "ACL_ACTIONS|EGRESS": "PACKET_ACTION,MIRROR_EGRESS_ACTION",
         "ACL_ACTION|PACKET_ACTION": "FORWARD"
@@ -272,72 +426,72 @@
         "timestamp": "20200813 01:32:30"
     },
     "FG_ROUTE_TABLE|fc:5::/128": {
- 	"0": "200:200:200:200::4@Vlan1000",
-	"1": "200:200:200:200::4@Vlan1000",
-	"2": "200:200:200:200::4@Vlan1000",
-	"3": "200:200:200:200::4@Vlan1000",
-	"4": "200:200:200:200::4@Vlan1000",
-	"5" : "200:200:200:200::4@Vlan1000",
-	"6" : "200:200:200:200::4@Vlan1000",
-	"7" : "200:200:200:200::4@Vlan1000",
-	"8" : "200:200:200:200::4@Vlan1000",
-	"9" : "200:200:200:200::4@Vlan1000",
-	"10" : "200:200:200:200::4@Vlan1000",
-	"11" : "200:200:200:200::4@Vlan1000",
-	"12" : "200:200:200:200::4@Vlan1000",
-	"13" : "200:200:200:200::4@Vlan1000",
-	"14" : "200:200:200:200::4@Vlan1000",
-	"15" : "200:200:200:200::4@Vlan1000",
-	"16" : "200:200:200:200::5@Vlan1000",
-	"17" : "200:200:200:200::5@Vlan1000",
-	"18" : "200:200:200:200::5@Vlan1000",
-	"19" : "200:200:200:200::5@Vlan1000",
-	"20" : "200:200:200:200::5@Vlan1000",
-	"21" : "200:200:200:200::5@Vlan1000",
-	"22" : "200:200:200:200::5@Vlan1000",
-	"23" : "200:200:200:200::5@Vlan1000",
-	"24" : "200:200:200:200::5@Vlan1000",
-	"25" : "200:200:200:200::5@Vlan1000",
-	"26" : "200:200:200:200::5@Vlan1000",
-	"27" : "200:200:200:200::5@Vlan1000",
-	"28" : "200:200:200:200::5@Vlan1000",
-	"29" : "200:200:200:200::5@Vlan1000",
-	"30" : "200:200:200:200::5@Vlan1000",
-	"31" : "200:200:200:200::5@Vlan1000"	
+        "0": "200:200:200:200::4@Vlan1000",
+        "1": "200:200:200:200::4@Vlan1000",
+        "2": "200:200:200:200::4@Vlan1000",
+        "3": "200:200:200:200::4@Vlan1000",
+        "4": "200:200:200:200::4@Vlan1000",
+        "5": "200:200:200:200::4@Vlan1000",
+        "6": "200:200:200:200::4@Vlan1000",
+        "7": "200:200:200:200::4@Vlan1000",
+        "8": "200:200:200:200::4@Vlan1000",
+        "9": "200:200:200:200::4@Vlan1000",
+        "10": "200:200:200:200::4@Vlan1000",
+        "11": "200:200:200:200::4@Vlan1000",
+        "12": "200:200:200:200::4@Vlan1000",
+        "13": "200:200:200:200::4@Vlan1000",
+        "14": "200:200:200:200::4@Vlan1000",
+        "15": "200:200:200:200::4@Vlan1000",
+        "16": "200:200:200:200::5@Vlan1000",
+        "17": "200:200:200:200::5@Vlan1000",
+        "18": "200:200:200:200::5@Vlan1000",
+        "19": "200:200:200:200::5@Vlan1000",
+        "20": "200:200:200:200::5@Vlan1000",
+        "21": "200:200:200:200::5@Vlan1000",
+        "22": "200:200:200:200::5@Vlan1000",
+        "23": "200:200:200:200::5@Vlan1000",
+        "24": "200:200:200:200::5@Vlan1000",
+        "25": "200:200:200:200::5@Vlan1000",
+        "26": "200:200:200:200::5@Vlan1000",
+        "27": "200:200:200:200::5@Vlan1000",
+        "28": "200:200:200:200::5@Vlan1000",
+        "29": "200:200:200:200::5@Vlan1000",
+        "30": "200:200:200:200::5@Vlan1000",
+        "31": "200:200:200:200::5@Vlan1000"
     },
     "FG_ROUTE_TABLE|100.50.25.12/32": {
- 	"0": "200.200.200.4@Vlan1000",
-	"1": "200.200.200.4@Vlan1000",
-	"2": "200.200.200.4@Vlan1000",
-	"3": "200.200.200.4@Vlan1000",
-	"4": "200.200.200.4@Vlan1000",
-	"5" : "200.200.200.4@Vlan1000",
-	"6" : "200.200.200.4@Vlan1000",
-	"7" : "200.200.200.4@Vlan1000",
-	"8" : "200.200.200.4@Vlan1000",
-	"9" : "200.200.200.4@Vlan1000",
-	"10" : "200.200.200.4@Vlan1000",
-	"11" : "200.200.200.4@Vlan1000",
-	"12" : "200.200.200.4@Vlan1000",
-	"13" : "200.200.200.4@Vlan1000",
-	"14" : "200.200.200.4@Vlan1000",
-	"15" : "200.200.200.4@Vlan1000",
-	"16" : "200.200.200.5@Vlan1000",
-	"17" : "200.200.200.5@Vlan1000",
-	"18" : "200.200.200.5@Vlan1000",
-	"19" : "200.200.200.5@Vlan1000",
-	"20" : "200.200.200.5@Vlan1000",
-	"21" : "200.200.200.5@Vlan1000",
-	"22" : "200.200.200.5@Vlan1000",
-	"23" : "200.200.200.5@Vlan1000",
-	"24" : "200.200.200.5@Vlan1000",
-	"25" : "200.200.200.5@Vlan1000",
-	"26" : "200.200.200.5@Vlan1000",
-	"27" : "200.200.200.5@Vlan1000",
-	"28" : "200.200.200.5@Vlan1000",
-	"29" : "200.200.200.5@Vlan1000",
-	"30" : "200.200.200.5@Vlan1000",
-	"31" : "200.200.200.5@Vlan1000"	
+        "0": "200.200.200.4@Vlan1000",
+        "1": "200.200.200.4@Vlan1000",
+        "2": "200.200.200.4@Vlan1000",
+        "3": "200.200.200.4@Vlan1000",
+        "4": "200.200.200.4@Vlan1000",
+        "5": "200.200.200.4@Vlan1000",
+        "6": "200.200.200.4@Vlan1000",
+        "7": "200.200.200.4@Vlan1000",
+        "8": "200.200.200.4@Vlan1000",
+        "9": "200.200.200.4@Vlan1000",
+        "10": "200.200.200.4@Vlan1000",
+        "11": "200.200.200.4@Vlan1000",
+        "12": "200.200.200.4@Vlan1000",
+        "13": "200.200.200.4@Vlan1000",
+        "14": "200.200.200.4@Vlan1000",
+        "15": "200.200.200.4@Vlan1000",
+        "16": "200.200.200.5@Vlan1000",
+        "17": "200.200.200.5@Vlan1000",
+        "18": "200.200.200.5@Vlan1000",
+        "19": "200.200.200.5@Vlan1000",
+        "20": "200.200.200.5@Vlan1000",
+        "21": "200.200.200.5@Vlan1000",
+        "22": "200.200.200.5@Vlan1000",
+        "23": "200.200.200.5@Vlan1000",
+        "24": "200.200.200.5@Vlan1000",
+        "25": "200.200.200.5@Vlan1000",
+        "26": "200.200.200.5@Vlan1000",
+        "27": "200.200.200.5@Vlan1000",
+        "28": "200.200.200.5@Vlan1000",
+        "29": "200.200.200.5@Vlan1000",
+        "30": "200.200.200.5@Vlan1000",
+        "31": "200.200.200.5@Vlan1000"
     },
     "REBOOT_CAUSE|2020_10_09_04_53_58": {
         "cause": "warm-reboot",
@@ -394,6 +548,21 @@
     "MUX_CABLE_TABLE|Ethernet12": {
         "state": "unknown"
     },
+    "MUX_LINKMGR_TABLE|Ethernet32": {
+        "state": "healthy"
+    },
+    "MUX_LINKMGR_TABLE|Ethernet0": {
+        "state": "healthy"
+    },
+    "MUX_LINKMGR_TABLE|Ethernet4": {
+        "state": "healthy"
+    },
+    "MUX_LINKMGR_TABLE|Ethernet8": {
+        "state": "unhealthy"
+    },
+    "MUX_LINKMGR_TABLE|Ethernet12": {
+        "state": "unhealthy"
+    },
     "VXLAN_TUNNEL_TABLE|EVPN_25.25.25.25": {
         "src_ip": "1.1.1.1",
         "dst_ip": "25.25.25.25",
@@ -444,6 +613,9 @@
         "xoff": "32768",
         "size": "51200"
     },
+    "BUFFER_MAX_PARAM_TABLE|global": {
+        "mmu_size": "13945824"
+    },
     "CHASSIS_MIDPLANE_TABLE|SUPERVISOR0": {
         "ip_address": "192.168.1.100",
         "access": "True"
@@ -455,6 +627,9 @@
     "CHASSIS_MIDPLANE_TABLE|LINE-CARD1": {
         "ip_address": "192.168.1.2",
         "access": "False"
+    },
+    "PORT_TABLE|Ethernet0": {
+        "supported_speeds": "10000,25000,40000,100000"
     },
     "PCIE_DEVICE|00:01.0": {
         "correctable|BadDLLP": "0",
@@ -553,5 +728,11 @@
         "non_fatal|Undefined": "0",
         "non_fatal|UnsupReq": "0",
         "non_fatal|UnxCmplt": "0"
+    },
+    "MUX_METRICS_TABLE|Ethernet0": {
+        "linkmgrd_switch_active_start": "2021-May-13 10:00:21.420898",
+        "linkmgrd_switch_standby_end": "2021-May-13 10:01:15.696728",
+        "xcvrd_switch_standby_end": "2021-May-13 10:01:15.696051",
+        "xcvrd_switch_standby_start": "2021-May-13 10:01:15.690835"
     }
 }

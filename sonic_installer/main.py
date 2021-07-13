@@ -11,11 +11,17 @@ from sonic_py_common import logger
 from swsscommon.swsscommon import SonicV2Connector
 
 from .bootloader import get_bootloader
-from .common import run_command, run_command_or_raise, IMAGE_PREFIX
+from .common import (
+    run_command, run_command_or_raise,
+    IMAGE_PREFIX,
+    UPPERDIR_NAME,
+    WORKDIR_NAME,
+    DOCKERDIR_NAME,
+)
 from .exception import SonicRuntimeException
 
 SYSLOG_IDENTIFIER = "sonic-installer"
-LOG_ERR = logger.Logger.LOG_PRIORITY_ERROR 
+LOG_ERR = logger.Logger.LOG_PRIORITY_ERROR
 LOG_NOTICE = logger.Logger.LOG_PRIORITY_NOTICE
 
 # Global Config object
@@ -132,7 +138,7 @@ def echo_and_log(msg, priority=LOG_NOTICE, fg=None):
     else:
         click.secho(msg, fg=fg)
     log.log(priority, msg, False)
-        
+
 
 # Function which validates whether a given URL specifies an existent file
 # on a reachable remote machine. Will abort the current operation if not
@@ -218,17 +224,48 @@ def print_deprecation_warning(deprecated_cmd_or_subcmd, new_cmd_or_subcmd):
                 fg="red", err=True)
     click.secho("Please use '{}' instead".format(new_cmd_or_subcmd), fg="red", err=True)
 
-def update_sonic_environment(click, bootloader, binary_image_version):
+
+def mount_squash_fs(squashfs_path, mount_point):
+    run_command_or_raise(["mkdir", "-p", mount_point])
+    run_command_or_raise(["mount", "-t", "squashfs", squashfs_path, mount_point])
+
+
+def umount(mount_point, read_only=True, recursive=False, force=True, remove_dir=True, raise_exception=True):
+    flags = []
+    if read_only:
+        flags.append("-r")
+    if force:
+        flags.append("-f")
+    if recursive:
+        flags.append("-R")
+    run_command_or_raise(["umount", *flags, mount_point], raise_exception=raise_exception)
+    if remove_dir:
+        run_command_or_raise(["rm", "-rf", mount_point], raise_exception=raise_exception)
+
+
+def mount_overlay_fs(lowerdir, upperdir, workdir, mount_point):
+    run_command_or_raise(["mkdir", "-p", mount_point])
+    overlay_options = "rw,relatime,lowerdir={},upperdir={},workdir={}".format(lowerdir, upperdir, workdir)
+    run_command_or_raise(["mount", "overlay", "-t", "overlay", "-o", overlay_options, mount_point])
+
+
+def mount_bind(source, mount_point):
+    run_command_or_raise(["mkdir", "-p", mount_point])
+    run_command_or_raise(["mount", "--bind", source, mount_point])
+
+
+def mount_procfs_chroot(root):
+    run_command_or_raise(["chroot", root, "mount", "proc", "/proc", "-t", "proc"])
+
+
+def mount_sysfs_chroot(root):
+    run_command_or_raise(["chroot", root, "mount", "sysfs", "/sys", "-t", "sysfs"])
+
+
+def update_sonic_environment(bootloader, binary_image_version):
     """Prepare sonic environment variable using incoming image template file. If incoming image template does not exist
        use current image template file.
     """
-    def mount_next_image_fs(squashfs_path, mount_point):
-        run_command_or_raise(["mkdir", "-p", mount_point])
-        run_command_or_raise(["mount", "-t", "squashfs", squashfs_path, mount_point])
-
-    def umount_next_image_fs(mount_point):
-        run_command_or_raise(["umount", "-rf", mount_point])
-        run_command_or_raise(["rm", "-rf", mount_point])
 
     SONIC_ENV_TEMPLATE_FILE = os.path.join("usr", "share", "sonic", "templates", "sonic-environment.j2")
     SONIC_VERSION_YML_FILE = os.path.join("etc", "sonic", "sonic_version.yml")
@@ -241,7 +278,7 @@ def update_sonic_environment(click, bootloader, binary_image_version):
 
     with bootloader.get_rootfs_path(new_image_dir) as new_image_squashfs_path:
         try:
-            mount_next_image_fs(new_image_squashfs_path, new_image_mount)
+            mount_squash_fs(new_image_squashfs_path, new_image_mount)
 
             next_sonic_env_template_file = os.path.join(new_image_mount, SONIC_ENV_TEMPLATE_FILE)
             next_sonic_version_yml_file = os.path.join(new_image_mount, SONIC_VERSION_YML_FILE)
@@ -264,7 +301,66 @@ def update_sonic_environment(click, bootloader, binary_image_version):
                 os.remove(env_file)
                 os.rmdir(env_dir)
         finally:
-            umount_next_image_fs(new_image_mount)
+            umount(new_image_mount)
+
+
+def migrate_sonic_packages(bootloader, binary_image_version):
+    """ Migrate SONiC packages to new SONiC image. """
+
+    SONIC_PACKAGE_MANAGER = "sonic-package-manager"
+    PACKAGE_MANAGER_DIR = "/var/lib/sonic-package-manager/"
+    DOCKER_CTL_SCRIPT = "/usr/lib/docker/docker.sh"
+    DOCKERD_SOCK = "docker.sock"
+    VAR_RUN_PATH = "/var/run/"
+
+    tmp_dir = "tmp"
+    packages_file = "packages.json"
+    packages_path = os.path.join(PACKAGE_MANAGER_DIR, packages_file)
+    sonic_version = re.sub(IMAGE_PREFIX, '', binary_image_version)
+    new_image_dir = bootloader.get_image_path(binary_image_version)
+    new_image_upper_dir = os.path.join(new_image_dir, UPPERDIR_NAME)
+    new_image_work_dir = os.path.join(new_image_dir, WORKDIR_NAME)
+    new_image_docker_dir = os.path.join(new_image_dir, DOCKERDIR_NAME)
+    new_image_mount = os.path.join("/", tmp_dir, "image-{0}-fs".format(sonic_version))
+    new_image_docker_mount = os.path.join(new_image_mount, "var", "lib", "docker")
+
+    if not os.path.isdir(new_image_docker_dir):
+        # NOTE: This codepath can be reached if the installation process did not
+        #       extract the default dockerfs. This can happen with docker_inram
+        #       though the bootloader class should have disabled the package
+        #       migration which is why this message is a non fatal error message.
+        echo_and_log("Error: SONiC package migration cannot proceed due to missing docker folder", LOG_ERR, fg="red")
+        return
+
+    with bootloader.get_rootfs_path(new_image_dir) as new_image_squashfs_path:
+        try:
+            mount_squash_fs(new_image_squashfs_path, new_image_mount)
+            # make sure upper dir and work dir exist
+            run_command_or_raise(["mkdir", "-p", new_image_upper_dir])
+            run_command_or_raise(["mkdir", "-p", new_image_work_dir])
+            mount_overlay_fs(new_image_mount, new_image_upper_dir, new_image_work_dir, new_image_mount)
+            mount_bind(new_image_docker_dir, new_image_docker_mount)
+            mount_procfs_chroot(new_image_mount)
+            mount_sysfs_chroot(new_image_mount)
+            run_command_or_raise(["chroot", new_image_mount, DOCKER_CTL_SCRIPT, "start"])
+            run_command_or_raise(["cp", packages_path, os.path.join(new_image_mount, tmp_dir, packages_file)])
+            run_command_or_raise(["touch", os.path.join(new_image_mount, "tmp", DOCKERD_SOCK)])
+            run_command_or_raise(["mount", "--bind",
+                                os.path.join(VAR_RUN_PATH, DOCKERD_SOCK),
+                                os.path.join(new_image_mount, "tmp", DOCKERD_SOCK)])
+            run_command_or_raise(["chroot", new_image_mount, "sh", "-c", "command -v {}".format(SONIC_PACKAGE_MANAGER)])
+        except SonicRuntimeException as err:
+            echo_and_log("Warning: SONiC Application Extension is not supported in this image: {}".format(err), LOG_ERR, fg="red")
+        else:
+            run_command_or_raise(["chroot", new_image_mount, SONIC_PACKAGE_MANAGER, "migrate",
+                                os.path.join("/", tmp_dir, packages_file),
+                                "--dockerd-socket", os.path.join("/", tmp_dir, DOCKERD_SOCK),
+                                "-y"])
+        finally:
+            run_command_or_raise(["chroot", new_image_mount, DOCKER_CTL_SCRIPT, "stop"], raise_exception=False)
+            umount(new_image_mount, recursive=True, read_only=False, remove_dir=False, raise_exception=False)
+            umount(new_image_mount, raise_exception=False)
+
 
 # Main entrypoint
 @click.group(cls=AliasedGroup)
@@ -286,8 +382,10 @@ def sonic_installer():
               help="Force installation of an image of a type which differs from that of the current running image")
 @click.option('--skip_migration', is_flag=True,
               help="Do not migrate current configuration to the newly installed image")
+@click.option('--skip-package-migration', is_flag=True,
+              help="Do not migrate current packages to the newly installed image")
 @click.argument('url')
-def install(url, force, skip_migration=False):
+def install(url, force, skip_migration=False, skip_package_migration=False):
     """ Install image from local binary or URL"""
     bootloader = get_bootloader()
 
@@ -331,7 +429,14 @@ def install(url, force, skip_migration=False):
         else:
             run_command('config-setup backup')
 
-        update_sonic_environment(click, bootloader, binary_image_version)
+        update_sonic_environment(bootloader, binary_image_version)
+
+        if not bootloader.supports_package_migration(binary_image_version) and not skip_package_migration:
+            echo_and_log("Warning: SONiC package migration is not supported for this bootloader/image", fg="yellow")
+            skip_package_migration = True
+
+        if not skip_package_migration:
+            migrate_sonic_packages(bootloader, binary_image_version)
 
     # Finally, sync filesystem
     run_command("sync;sync;sync")
